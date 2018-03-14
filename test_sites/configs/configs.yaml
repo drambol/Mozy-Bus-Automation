@@ -1,0 +1,166 @@
+global:
+  # Browser wait time in seconds, e.g. locating a UI element
+  default_wait_time:            180
+  # Max wait time in seconds, e.g downloading a big file
+  max_wait_time:                300
+  # Aria wait time in seconds, it usually need more time
+  aria_wait_time:               600
+  # Fixed test password for all password field
+  test_pwd:                     Test1234
+  # Fixed test password for hipaa password field
+  test_hipaa_pwd:               Test1234*
+  # User email prefix, e.g qa1+reg+test@mozy.com
+  email_prefix_gmail:                 mozybus
+  email_domain_gmail:                 gmail.com
+  email_prefix_outlook:               mozyautotest
+  email_domain_outlook:               emc.com
+  # Files downloaded location
+  download_folder:              downloads
+  test_data_folder:             test_data
+  # Profile name
+  profile_name:                 p3pf34d7.QAAutomation
+
+bus:
+  company_type:
+    mozypro:                    MozyPro
+    mozyenterprise:             MozyEnterprise
+    mozyenterprise_dps:         MozyEnterprise DPS
+    reseller:                   Reseller
+    itemized_pro:               MozyPro Itemized
+    itemized_reseller:          Reseller Itemized
+    oem:                        OEM
+
+  reseller_type:
+    silver:                     Silver
+    gold:                       Gold
+    platinum:                   Platinum
+
+  mozy_root_partner:
+    mozypro:                    MozyPro
+    mozypro_france:             MozyPro France
+    mozypro_germany:            MozyPro Germany
+    mozypro_ireland:            MozyPro Ireland
+    mozypro_uk:                 MozyPro UK
+
+  root_role:
+    mozypro:                    SMB Bundle Limited
+    mozyenterprise:             Enterprise
+    reseller:                   Reseller Root
+    biz_root:                   Business Root
+
+  menu:
+    # Quick Links
+    resource_summary:           Resource Summary
+    user_group_list:            User Group List
+    add_new_user:               Add New User
+    change_plan:                Change Plan
+    download_enterprise:        Download MozyEnterprise Client
+    download_client:            Download MozyPro Client
+    manage_vatfx_rates:         Manage VAT/FX Rates
+    add_new_promotion:          Add New Promotion
+    list_promotions:            List Promotions
+    add_account_attribute_key:   Add Account Attribute Key
+    list_account_attribute_keys: List Account Attribute Keys
+
+    # Partners
+    add_new_partner:            Add New Partner
+    search_list_partner:        Search / List Partners
+
+    # Users
+    search_list_users:          Search / List Users
+    search_list_machines:       Search / List Machines
+    list_user_groups:           List User Groups
+    add_new_user_group:         Add New User Group
+
+    # Admins
+    search_admin:               Search Admins
+    list_admins:                List Admins
+    add_new_admin:              Add New Admin
+    list_roles:                 List Roles
+    add_new_role:               Add New Role
+    list_capabilities:          List Capabilities
+
+    # Configurations
+    accont_details:             Account Details
+    password_policy:            Password Policy
+    authentication_policy:      Authentication Policy
+    client_configuration:       Client Configuration
+
+    # Resources
+    change_plan:                Change Plan
+    order_data_shuttle:         Order Data Shuttle
+    view_data_shuttle_orders:   View Data Shuttle Orders
+    data_shuttle_status:        Data Shuttle Status
+    billing_information:        Billing Information
+    billing_history:            Billing History
+    change_payment_information: Change Payment Information
+    manage_resources:           Manage Resources
+    assign_keys:                Assign Keys
+    transfer_resources:         Transfer Resources
+    return_unused_resources:    Return Unused Resources
+    purchase_resources:         Purchase Resources
+
+    # Reports
+    report_builder:             Report Builder
+    scheduled_reports:          Scheduled Reports
+    quick_reports:              Quick Reports
+
+aria:
+  primary_menu:
+    dashboard:                  Dashboard
+    accounts:                   Accounts
+
+  secondary_menu:
+    search:                     Search
+    account_overview:           Account Overview
+
+phoenix:
+  company_type:
+    mozypro:                    MozyPro
+    mozyhome:                   MozyHome
+
+  menu:
+    #MozyHome
+    #Account Pages
+    account_home:               Account Home
+    my_plan:                    My Plan
+    my_computer:                My Computer
+    my_profile:                 My Profile
+    download_mozy:              Download Mozy
+    stash_beta:                 Stash Beta
+    log_out:                    Log Out
+
+    #Need Help?
+    mozy_knowledge_base:        Mozy Knowledge Base
+    windows_client_manual:      Windows Client Manual
+    os_x_client_manual:         OS X Client Manual
+    mozyhome_support_portal:    MozyHome Support Portal
+
+  captcha:                      kwpa3121
+
+fedid:
+  user_email:                   auto1@mtdev.mozypro.local
+  user_name:                    auto1
+  subdomain:                    qa8saml
+
+gmail:
+  username:                     mozybus@gmail.com
+  password:                     qapassword
+
+outlook:
+  username:                     svc_mozybusauto
+  password:                     lib/email_helper/svc_mozybusauto.pwd
+  endpoint:                     https://email.emc.com/ews/Exchange.asmx
+  mailbox:                      mozyautotest@emc.com
+
+rsa:
+  public_key:                   lib/rsa/appsqa.publickey
+  private_key:                  appsqa.privatekey
+
+linux:
+  host: 10.237.1.134
+  machine_name: BUS-Auto-03-Zoe
+  user: user
+  password: QAP@SSw0rd
+  path: /home/user
+

@@ -1,0 +1,32 @@
+#staging
+#std1
+173.243.54.84  secure.mozy.com secure.mozy.ie secure.mozy.fr secure.mozy.co.uk secure.mozy.de
+173.243.54.85  www.mozypro.com secure.mozypro.com mozypro.com www.mozyenterprise.com mozyenterprise.com platinum.mozyenterprise.com platinum.mozypro.com mozyoem.mozypro.com
+173.243.54.115 mozy.com mozy.ie mozy.de mozy.fr mozy.co.uk #test.mozy.com
+173.243.54.85  client.mozy.com resetpassword.mozypro.com oem.partners.com partners.mozy.com
+173.243.54.131 triton.mozy.com
+173.243.54.85 emcfortress.mozypro.com long1.mozypro.com stagingfedid.mozypro.com encodingfedid.mozypro.com backupclient.mozyenterprise.com
+173.243.54.88 std1.mozypro.com std1.mozyenterprise.com std1testentacct.mozyenterprise.com
+173.243.54.82 auth.mozy.com auth2.mozy.com
+173.243.54.116 rainbow.mozy.com
+
+#google
+127.0.0.1 ssl.google-analytics.com www.google-analytics.com google-analytics.com
+127.0.0.1 ajax.googleapis.com
+127.0.0.1 apis.google.com
+
+#cms other
+127.0.0.1 connect.facebook.net static.ak.facebook.com s-static.ak.facebook.com www.facebook.com facebook.com
+127.0.0.1 platform.linkedin.com
+127.0.0.1 platform.twitter.com analytics.twitter.com
+127.0.0.1 ads.yahoo.com
+127.0.0.1 d.adroll.com match.adsrvr.org ib.adnxs.com googleads.g.doubleclick.net cm.g.doubleclick.net
+127.0.0.1 idsync.rlcdn.com
+127.0.0.1 server.iad.liveperson.net
+127.0.0.1 decho.122.2o7.net
+127.0.0.1 mozy.tt.omtrdc.net
+127.0.0.1 ads.revsci.net
+127.0.0.1 admaym.com
+127.0.0.1 secure.adnxs.com
+127.0.0.1 us-u.openx.net
+127.0.0.1 x.bidswitch.com

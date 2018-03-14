@@ -1,0 +1,26 @@
+qa3:
+  phx: 10.29.26.112 #phoenix01.qa3.mozyops.com
+  bus: 10.29.26.106 #busclient01.qa3.mozyops.com
+  
+qa6:
+  cms: 10.29.29.200 #tenjin01
+  euc: 10.29.29.200 #tenjin01
+  phx: 10.29.29.175 #phoenix01
+  #phx: 10.29.29.188 #phoenix02
+  bus: 10.29.29.185 #busclient01
+  #bus: 10.29.29.166 #busclient04
+  rbw: 10.29.29.133 #rainbow01
+
+qa12:
+  phx: 10.135.14.105
+  bus: 10.135.14.103
+
+std1:
+  cms: 173.243.54.115
+  euc: 173.243.54.114
+  phx: 173.243.54.84
+  bus: 173.243.54.85
+  rbw: 173.243.54.116
+
+prod:
+  #Leave this blank

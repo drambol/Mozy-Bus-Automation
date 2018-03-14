@@ -1,0 +1,38 @@
+#production
+127.0.0.1 ajax.googleapis.com
+127.0.0.1 apis.google.com
+127.0.0.1 ads.revsci.net
+127.0.0.1 ads.yahoo.com
+127.0.0.1 admaym.com
+127.0.0.1 analytics.twitter.com
+
+127.0.0.1 cm.g.doubleclick.net
+127.0.0.1 connect.facebook.net
+
+127.0.0.1 decho.122.2o7.net
+127.0.0.1 d.adroll.com
+127.0.0.1 d.adroll.com
+
+127.0.0.1 google-analytics.com
+127.0.0.1 googleads.g.doubleclick.net
+
+127.0.0.1 facebook.com
+
+127.0.0.1 ib.adnxs.com
+127.0.0.1 idsync.rlcdn.com
+
+127.0.0.1 match.adsrvr.org
+127.0.0.1 mozy.tt.omtrdc.net
+
+127.0.0.1 platform.linkedin.com
+127.0.0.1 platform.twitter.com
+
+127.0.0.1 static.ak.facebook.com
+127.0.0.1 s-static.ak.facebook.com
+127.0.0.1 server.iad.liveperson.net
+127.0.0.1 secure.adnxs.com
+127.0.0.1 ssl.google-analytics.com
+
+127.0.0.1 us-u.openx.net
+
+127.0.0.1 x.bidswitch.com

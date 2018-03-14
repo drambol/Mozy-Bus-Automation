@@ -1,0 +1,352 @@
+require 'cucumber'
+require 'cucumber/rake/task'
+require './lib/testlink_helper'
+require './scripts/ci/json_result_merge'
+require './scripts/ci/version'
+require './scripts/ci/get_phoenix_rerun_cases'
+require './scripts/ci/parallel_html_report'
+
+namespace :testlink do
+
+  TEST_PLAN = 268267  # "BUS2.5 Automated Cases Test Pass"
+  PROJECT_PREFIX = "Mozy"
+  PROJECT_ID = 2      # 2 - 'Mozy'
+  CLIENT = TestlinkHelper::TestlinkAPIClient.new
+
+  desc "Testlink management operations - about"
+  task :about do
+    puts CLIENT.run_api("about", {})
+  end
+
+  desc "Get cases exists in the repo but missed from testplan (default plan is 'BUS2.5 Automated Cases Test Pass')"
+  task :cases_missed_from_testplan, :testplan_id do |t, args|
+    # Testplan 'BUS2.5 Automated Cases Test Pass' ID is 268267, set as default test plan right now
+    args.with_defaults(:testplan_id => TEST_PLAN)
+    cases = cases_missed_from_testplan(args[:testplan_id])
+    puts "#{cases.size} cases missed from testplan"
+    puts cases
+  end
+
+  desc "Get cases exists in the testplan but no code in the repo (default plan is 'BUS2.5 Automated Cases Test Pass')"
+  task :cases_missed_from_repo, :testplan_id do |t, args|
+    # Testplan 'BUS2.5 Automated Cases Test Pass' ID is 268267, set as default test plan right now
+    args.with_defaults(:testplan_id => TEST_PLAN)
+    cases = cases_missed_from_repo(args[:testplan_id])
+    puts "#{cases.size} cases missed from the repository"
+    puts cases
+  end
+
+  desc "Add missing cases into testplan (default plan is 'BUS2.5 Automated Cases Test Pass'), run 'rake testlink:cases_missed_from_testplan' to get list of missing cases"
+  task :add_missing_cases, :testplan_id do |t, args|
+    # Testplan 'BUS2.5 Automated Cases Test Pass' ID is 268267, set as default test plan right now
+    args.with_defaults(:testplan_id => TEST_PLAN)
+    cases = cases_missed_from_testplan(args[:testplan_id])
+    cases.each do |tc|
+      puts "Adding #{tc} into testplan..."
+      test_case = CLIENT.run_api("getTestCase", {:testcaseexternalid => "#{PROJECT_PREFIX}-#{tc}"}).first
+      arg = {:testplanid => args[:testplan_id], :testcaseid => test_case["testcase_id"].to_i, :testprojectid => PROJECT_ID, :version => test_case["version"].to_i}
+      CLIENT.run_api("addTestCaseToTestPlan", arg)
+      puts "#{tc} added"
+    end
+  end
+
+  def get_cases_from_testplan(testplan_id)
+    # Get cases from testlink
+    cases = CLIENT.run_api("getTestCasesForTestPlan", {:testplanid => testplan_id})
+    cases.values.flatten.map{|c| c["external_id"]}
+  end
+
+  def get_cases_from_config
+    # Get cases from local git repo by config.properties file
+    file = "config.properties"
+    text = File.open(file, 'r').read.split(',')
+    text.map{|t| t[t.index('"')+1..t.index("::")-1] if t.include?("::")}.compact
+  end
+
+  def cases_missed_from_testplan(testplan_id)
+    cases_in_testplan = get_cases_from_testplan(testplan_id)
+    cases_in_repo = get_cases_from_config
+    cases_in_repo.select{|c| !cases_in_testplan.include?(c)}
+  end
+
+  def cases_missed_from_repo(testplan_id)
+    cases_in_testplan = get_cases_from_testplan(testplan_id)
+    cases_in_repo = get_cases_from_config
+    cases_in_testplan.select{|c| !cases_in_repo.include?(c)}
+  end
+end
+
+# update_config by feature file or tags
+# example:
+#   # @abc or @123
+#   rake update_config OPT='-t @abc,@123 features/abc.feature'
+#   # @abc and @123
+#   rake update_config OPT='-t @abc -t @123 features/abc.feature'
+#   # not @abc
+#   rake update_config OPT='-t ~@abc features/abc.feature'
+# for fedid cases, you can run:
+#   rake update_config OPT='features/configuration/ features/users/machine_migration.feature'
+Cucumber::Rake::Task.new(:update_config, 'e.g. rake update_config  OPT="-e \'configuration|users/machine_migration\' -t ~@phoenix"') do |t|
+  if ARGV[1]
+    tags = ARGV[1].gsub(/.+=/, '')
+    cucumber_options = ARGV[1].gsub(/.+=/, '') if ARGV[1].match /^OPT=/
+  end
+  t.cucumber_opts = "-d -f Cucumber::Formatter::UpdateConfig #{cucumber_options}"
+end
+
+desc 'Run Cucumber features and generate an HTML summary and a plain text log'
+
+Cucumber::Rake::Task.new(:all, 'run all the testcases') do |t|
+  t.cucumber_opts = "--color --format html --out all_features_#{Time.now.strftime("%Y%m%dT%H%M")}.html features"
+end
+
+Cucumber::Rake::Task.new(:smoke, 'run smoke cases') do |t|
+  t.cucumber_opts = "--color --format html --out smoke_test_#{Time.now.strftime("%Y%m%dT%H%M")}.html --tags @smoke"
+end
+
+Cucumber::Rake::Task.new(:verify_table ) do |t|
+  t.cucumber_opts = "--tags @TC.17955,@TC.15385,@TC.17881,@TC.16184"
+end
+
+task :bus_deployment_test, :arg do |t, args|
+  Cucumber::Rake::Task.new(:run) do |t|
+    t.cucumber_opts = "features/bus_smoke_test.feature #{args[:arg]} --tags ~@cleanup --format json --out report.json --format html --out html-report/report.html --format rerun --out rerun.txt --format pretty"
+  end
+  Rake::Task[:run].invoke()
+end
+
+Cucumber::Rake::Task.new(:bus_deployment_test_cleanup ) do |t|
+  t.cucumber_opts = 'features/bus_smoke_test.feature --tags @cleanup --format pretty'
+end
+
+desc 'rerun failed tests'
+Cucumber::Rake::Task.new(:rerun ) do |t|
+  t.cucumber_opts = '@rerun.txt --format json --out report_rerun.json --format html --out html-report/report_rerun.html --format pretty'
+end
+
+Cucumber::Rake::Task.new(:parallel_rerun ) do |t|
+  t.cucumber_opts = 'features/bus_smoke_test/features/bus_smoke_test_part5.feature:42:67,features/bus_smoke_test/features/bus_smoke_test_part3.feature:39:91'
+end
+
+def run_rake_task(name, arg)
+  begin
+    if arg.nil?
+      Rake::Task[name].invoke
+    else
+      Rake::Task[name].invoke(arg)
+    end
+
+  rescue Exception => e
+    return false
+  end
+  true
+end
+
+desc 'Run BUS deployment test and rerun failed tests'
+task :bus_deployment_test_with_retry, :arg do |t, args|
+  first_run = run_rake_task('bus_deployment_test', args[:arg])
+  rerun_success = true
+  unless first_run
+    rerun_success = run_rake_task('rerun', nil)
+  end
+
+  run_rake_task('bus_deployment_test_cleanup', nil)
+
+  #merge the results
+  merge('report_rerun.json', 'report.json', 'report_merged.json')
+  include Version
+  get_version
+  unless first_run || rerun_success
+    raise 'Cucumber tests failed'
+  end
+end
+
+desc 'Run parallel test and rerun failed tests'
+task :parallel_test_with_retry, :arg do |t, args|
+  first_run = system("bundle exec parallel_cucumber #{args[:arg]}")
+  rerun_success = true
+  unless first_run
+    rerun_success = system("bundle exec parallel_cucumber_ext @rerun.txt -n 5 -o '-p parallel_rerun'")
+  end
+
+  #merge html reports
+  render_parallel_report
+
+  #merge parallel results
+  merge_parallel_json('.')
+
+  include Version
+  get_version
+  unless first_run || rerun_success
+    raise 'Cucumber tests failed'
+  end
+end
+
+
+task :blue_green_test, :arg do |t, args|
+  Cucumber::Rake::Task.new(:run) do |t|
+    t.cucumber_opts = "#{args[:arg]} --format json --out report.json --format html --out html-report/report.html --format rerun --out rerun.txt --format pretty"
+  end
+  Rake::Task[:run].invoke()
+end
+
+desc 'Run blue green memcache test and rerun failed tests'
+task :blue_green_test_with_retry, :arg do |t, args|
+  first_run = run_rake_task('blue_green_test', args[:arg])
+  rerun_success = true
+  unless first_run
+    rerun_success = run_rake_task('rerun', nil)
+  end
+
+  #merge the results
+  merge('report_rerun.json', 'report.json', 'report_merged.json')
+  include Version
+  get_version
+  unless first_run || rerun_success
+    raise 'Cucumber tests failed'
+  end
+end
+
+
+desc 'Run phoenix parallel test and rerun failed tests'
+task :phoenix_parallel_test_with_retry, :arg do |t, args|
+  first_run = system("bundle exec parallel_cucumber #{args[:arg]}")
+  rerun_success = true
+  unless first_run
+    rerun_success = run_rake_task('phoenix_smoke_rerun', nil)
+  end
+  
+  #merge html reports
+  render_parallel_report
+  
+  #merge parallel results
+  merge_parallel_json('.')
+  
+  unless first_run || rerun_success
+    raise 'Cucumber tests failed'
+  end
+end
+
+task :phoenix_smoke_test, :arg do |t, args|
+  Cucumber::Rake::Task.new(:phoenix_run) do |t|
+    t.cucumber_opts = "features/phoenix_smoke_test.feature #{args[:arg]} --format json --out report.json --format html --out html-report/report.html --format rerun --out rerun.txt --format pretty"
+  end
+  Rake::Task[:phoenix_run].invoke()
+end
+
+task :phoenix_smoke_rerun, :arg do |t, args|
+  Cucumber::Rake::Task.new(:phoenix_rerun) do |t|
+    t.cucumber_opts = "features/phoenix_smoke_test.feature --tags #{get_rerun_cases} #{args[:arg]} --format json --out report_rerun.json --format html --out html-report/report_rerun.html --format pretty"
+  end
+  Rake::Task[:phoenix_rerun].invoke()
+end
+
+Cucumber::Rake::Task.new(:phoenix_smoke_test_cleanup ) do |t|
+  t.cucumber_opts = 'features/phoenix_smoke_test.feature --tags @phoenix_cleanup --format pretty'
+end
+
+desc 'Run Phoenix smoke test and rerun failed tests'
+task :phoenix_smoke_test_with_retry, :arg do |t, args|
+  first_run = run_rake_task('phoenix_smoke_test', args[:arg])
+  rerun_success = true
+  unless first_run
+    rerun_success = run_rake_task('phoenix_smoke_rerun', nil)
+  end
+
+  run_rake_task('phoenix_smoke_test_cleanup', nil)
+
+  #merge the results
+  merge('report_rerun.json', 'report.json', 'report_merged.json')
+
+  unless first_run || rerun_success
+    raise 'Cucumber tests failed'
+  end
+end
+
+
+task :freyja_deployment_test, :arg do |t, args|
+  Cucumber::Rake::Task.new(:run) do |t|
+    t.cucumber_opts = "features/freyja/ #{args[:arg]} --format json --out report.json --format html --out html-report/report.html --format rerun --out rerun.txt --format pretty"
+  end
+  Rake::Task[:run].invoke()
+end
+
+desc 'Run Freyja deployment test and rerun failed tests'
+task :freyja_deployment_test_with_retry, :arg do |t, args|
+  first_run = run_rake_task('freyja_deployment_test', args[:arg])
+  rerun_success = true
+  unless first_run
+    rerun_success = run_rake_task('rerun', nil)
+  end
+
+  #merge the results
+  merge('report_rerun.json', 'report.json', 'report_merged.json')
+  include Version
+  get_version
+  unless first_run || rerun_success
+    raise 'Cucumber tests failed'
+  end
+end
+
+
+desc 'update windows hosts file according to the environment variable settings. This task must be run as administrator'
+task :win_hosts do
+  QA6_BUSCLIENT04_HOSTS = 'scripts/ci/qa6_busclient04.hosts'
+  QA6_BUSCLIENT01_HOSTS = 'scripts/ci/qa6_busclient01.hosts'
+  QA6_BUSCLIENT03_HOSTS = 'scripts/ci/qa6_busclient03.hosts'
+  QA6_BUSCLIENT05_HOSTS = 'scripts/ci/qa6_busclient05.hosts'
+  QA6_BUSCLIENT06_HOSTS = 'scripts/ci/qa6_busclient06.hosts'
+  QA6_BUSCLIENT07_HOSTS = 'scripts/ci/qa6_busclient07.hosts'
+  QA6_BUSCLIENT08_HOSTS = 'scripts/ci/qa6_busclient08.hosts'
+  QA12_HOSTS = 'scripts/ci/qa12.hosts'
+  QA12_BUSCLIENT01_HOSTS = 'scripts/ci/qa12_busclient01.hosts'
+  QA12_BUSCLIENT03_HOSTS = 'scripts/ci/qa12_busclient03.hosts'
+  STG_HOSTS = 'scripts/ci/stg.hosts'
+  PANTHEON_HOSTS = 'scripts/ci/pantheon.hosts'
+  PRD_HOSTS = 'scripts/ci/prd.hosts'
+
+  hostsFile = 'C:/Windows/System32/Drivers/etc/hosts'
+  srcHostName = nil
+  env = ENV['BUS_ENV']
+
+  case env
+    when 'qa6_busclient04'
+      srcHostName = QA6_BUSCLIENT04_HOSTS
+    when 'qa6_busclient01'
+      srcHostName = QA6_BUSCLIENT01_HOSTS
+    when 'qa6_busclient03'
+      srcHostName = QA6_BUSCLIENT03_HOSTS
+    when 'qa6_busclient05'
+      srcHostName = QA6_BUSCLIENT05_HOSTS
+    when 'qa6_busclient06'
+      srcHostName = QA6_BUSCLIENT06_HOSTS
+    when 'qa6_busclient07'
+      srcHostName = QA6_BUSCLIENT07_HOSTS
+    when 'qa6_busclient08'
+      srcHostName = QA6_BUSCLIENT08_HOSTS
+    when 'qa12h'
+      srcHostName = QA12_HOSTS
+    when 'qa12h_busclient01'
+      srcHostName = QA12_BUSCLIENT01_HOSTS
+    when 'qa12h_busclient03'
+      srcHostName = QA12_BUSCLIENT03_HOSTS
+    when 'std'
+      srcHostName = STG_HOSTS
+    when 'pantheon'
+      srcHostName = PANTHEON_HOSTS
+    when 'prod'
+      srcHostName = PRD_HOSTS
+  end
+
+  begin
+    destHost = File.new(hostsFile, 'w')
+    srcHost = File.new(srcHostName, 'r')
+    srcHost.each_line { |line| destHost.puts line}
+  rescue Exception => ex
+      raise ex
+  ensure
+    srcHost.close if !srcHost.nil?
+    destHost.close if !destHost.nil?
+  end
+
+end

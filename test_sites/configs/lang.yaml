@@ -1,0 +1,504 @@
+global:
+# settings file for keeping track of localized versions of commonly called items.
+# using in lieu of case statements & hard coded values throughout the code
+# info is called via #{LANG[partner.company_info.country]['<DESIRED-AREA>']}
+# --------------------------
+# begin section for localized translations of links and handles used
+#  verification of actual text within pages should be subject of later work
+#  this is for purposes of navigation
+# will try to keep all lang specific items here, if needed will seperate by home/pro type
+  verify_mail_link_base:  https://secure.mozy.com/registration/verify_email_address/
+
+United States:
+  language: en
+  MozyPro:
+    go_to_acct: Mozy Admin Console
+    start_using_mozy: Start using Mozy
+    #pending removal
+    skip_stash: Don't Show This Again
+    logout: LOG OUT
+    survey_industry: Financial Services
+    survey_num_employees: 251-500
+    survey_contact_res: Online Other
+    bill_info: Billing Information
+    bill_hist: Billing History
+    admin_quick_start: Go to Quick Start for MozyPro Administrators
+    man_res: Manage Resources
+
+  MozyHome:
+    go_to_acct: Go to Account
+    acct_page_link: account page
+    resend_verify_email_link: Resend
+    back_2_login_link: Back to Login Page
+    logout: Log Out
+    acct_link: Account Home
+    plan_link: My Plan
+    devices_link: My Computer
+    profile_link: My Profile
+    dl_link: Download Backup Software
+    stash_link: Download Mozy Sync
+    logout_link: Log Out
+    know_base_link: Mozy Knowledge Base
+    winclient_man_link: Windows Client Manual
+    macclient_man_link: OS X Client Manual
+    support_page_link: MozyHome Support Portal
+    verify_mail_subject:  Please verify your email for MozyHome
+    verify_mail_success:  Email Address has been verified
+    verify_mail_banner: Email Address Verified
+    free_mail_subject:  Welcome to MozyHome!
+    gender: Male
+    birth_year: 1970
+    survey_num_coworkers: 1,000-9,999
+    job_cat:  Technology Related
+    job_role: IT Consultant
+    job_industry: Aerospace/Travel
+    my_account: My Account
+    refer_link: Referrals
+    upgrade_link: Upgrade
+
+Ireland:
+  language: en-gb
+  MozyPro:
+    go_to_acct: Mozy Admin Console
+    start_using_mozy: Start using Mozy
+    #pending removal
+    skip_stash: Don't Show This Again
+    logout: LOG OUT
+    survey_industry: Government
+    survey_num_employees: 2000+
+    survey_contact_res: Conference/Trade Show
+    bill_info: Billing Information
+    bill_hist: Billing History
+    admin_quick_start: Go to Quick Start for MozyPro Administrators
+    man_res: Manage Resources
+
+  MozyHome:
+    go_to_acct: Go to Account
+    acct_page_link: account page
+    resend_verify_email_link: Resend
+    back_2_login_link: Back to Login Page
+    logout: Log Out
+    acct_link: Account Home
+    plan_link: My Plan
+    devices_link: My Computer
+    profile_link: My Profile
+    dl_link: Download Backup Software
+    stash_link: Download Mozy Sync
+    logout_link: Log Out
+    know_base_link: Mozy Knowledge Base
+    winclient_man_link: Windows Client Manual
+    macclient_man_link: OS X Client Manual
+    support_page_link: MozyHome Support Portal
+    verify_mail_subject:  Please verify your email for MozyHome
+    verify_mail_success:  Email Address has been verified
+    verify_mail_banner: Email Address Verified
+    free_mail_subject:  Welcome to MozyHome!
+    gender: Female
+    birth_year: 1971
+    survey_num_coworkers: 50-99
+    job_cat:  Technology Related
+    job_role: Database Administration
+    job_industry: Health Care
+    my_account: My Account
+    refer_link: Referrals
+    upgrade_link: Upgrade
+
+United Kingdom:
+  language: en-gb
+  MozyPro:
+    go_to_acct: Mozy Admin Console
+    start_using_mozy: Start using Mozy
+    #pending removal
+    skip_stash: Don't Show This Again
+    logout: LOG OUT
+    survey_industry: Insurance
+    survey_num_employees: 501-1000
+    survey_contact_res: Radio
+    bill_info: Billing Information
+    bill_hist: Billing History
+    admin_quick_start: Go to Quick Start for MozyPro Administrators
+    man_res: Manage Resources
+
+  MozyHome:
+    go_to_acct: Mozy Admin Console
+    acct_page_link: account page
+    resend_verify_email_link: Resend
+    back_2_login_link: Back to Login Page
+    logout: Log Out
+    acct_link: Account Home
+    plan_link: My Plan
+    devices_link: My Computer
+    profile_link: My Profile
+    dl_link: Download Backup Software
+    stash_link: Download Mozy Sync
+    logout_link: Log Out
+    know_base_link: Mozy Knowledge Base
+    winclient_man_link: Windows Client Manual
+    macclient_man_link: OS X Client Manual
+    support_page_link: MozyHome Support Portal
+    verify_mail_subject:  Please verify your email for MozyHome
+    verify_mail_success:  Email Address has been verified
+    verify_mail_banner: Email Address Verified
+    free_mail_subject:  Welcome to MozyHome!
+    gender: Male
+    birth_year: 1972
+    survey_num_coworkers: 500-999
+    job_cat:  Non-Technology Related
+    job_role: Education
+    job_industry: Education
+    my_account: My Account
+    refer_link: Referrals
+    upgrade_link: Upgrade
+
+Germany:
+  language: de
+  MozyPro:
+    go_to_acct: Mozy Admin Console
+    #pending translation
+    start_using_mozy: Start using Mozy
+    #pending removal
+    skip_stash: Dies nicht mehr anzeigen
+    start_using_mozy: Start using Mozy
+    logout: ABMELDEN
+    survey_industry: Finanzleistungen
+    survey_num_employees: 1001-2000
+    survey_contact_res: Online-Werbung
+    bill_info: Rechnungsangaben
+    bill_hist: Rechnungsverlauf
+    admin_quick_start: Zur Schnellstartanleitung für MozyPro-Administratoren wechseln.
+    man_res: Ressourcen verwalten
+
+  MozyHome:
+    go_to_acct: Mozy Admin Console
+    acct_page_link: Kontoseite
+    resend_verify_email_link: Erneut senden
+    back_2_login_link: Zurück zur Anmeldeseite
+    logout: ABMELDEN
+    acct_link: Konto-Startseite
+    dl-win: Download für Win
+    dl-mac: Download für Mac
+    acct_link: Konto-Startseite
+    plan_link: Mein Tarif
+    devices_link: Arbeitsplatz
+    profile_link: Mein Profil
+    dl_link: Backup-Software herunterladen
+    logout_link: Abmelden
+    know_base_link: Mozy-Wissensdatenbank
+    winclient_man_link: Windows-Client-Handbuch
+    macclient_man_link: OS-X-Client-Handbuch
+    verify_mail_subject:  Bitte bestätigen Sie Ihre E-Mail für MozyHome
+    verify_mail_success:  Die E-Mail-Adresse wurde bestätigt
+    verify_mail_banner: E-Mail-Adresse überprüft
+    free_mail_subject:  Willkommen bei MozyHome!
+    gender: Weiblich
+    birth_year: 1969
+    survey_num_coworkers: 100-499
+    job_cat:  Technikbezogen
+    job_role: Projektmanagement Entwicklung
+    job_industry: Produzent (technisch)
+    change_plan:  Aktualisieren
+    my_account: Mein Konto
+    refer_link: Weiterempfehlungen
+    upgrade_link: Aktualisieren
+    same_as_current_plan: Wie der aktuelle Tarif
+
+France:
+  language: fr
+  MozyPro:
+    go_to_acct: Console d'administration Mozy
+    #pending translation
+    start_using_mozy: Start using Mozy
+    #pending removal
+    skip_stash: Ne plus afficher ce message
+    logout: DÉCONNEXION
+    survey_industry: Services financiers
+    survey_num_employees: 6-20
+    survey_contact_res: Autre en ligne
+    bill_info: Informations de facturation
+    bill_hist: Historique de facturation
+    admin_quick_start: Accédez au guide de démarrage rapide des administrateurs MozyPro.
+    man_res: Gérer les ressources
+
+  MozyHome:
+    go_to_acct: Mozy Admin Console
+    acct_page_link: page de votre compte
+    resend_verify_email_link: Renvoyer
+    back_2_login_link:  Retour à la page de connexion
+    logout: DÉCONNEXION
+    dl-win: Télécharger pour Windows
+    dl-mac: Télécharger pour Mac
+    acct_link: Accueil du compte
+    plan_link: Mon plan
+    devices_link: Mon Ordinateur
+    profile_link: Mon profil
+    dl_link: Télécharger le logiciel de sauvegarde
+    logout_link: Déconnexion
+    know_base_link: Base de connaissances de Mozy
+    winclient_man_link: Manuel du client Windows
+    macclient_man_link: Manuel du client OS X
+    verify_mail_subject:  Vérifiez votre adresse électronique pour MozyHome
+    verify_mail_success:  L'adresse électronique a été vérifiée.
+    verify_mail_banner: Adresse électronique vérifiée
+    free_mail_subject:  Bienvenue dans MozyHome !
+    gender: Homme
+    birth_year: 1968
+    survey_num_coworkers: 2-9
+    job_cat:  Technologique
+    job_role: Administration eBusiness
+    job_industry: Conception graphique
+    change_plan:  Mettre à niveau
+    my_account: Mon Compte
+    refer_link: Parrainages
+    upgrade_link: Mettre à niveau
+    same_as_current_plan: Identique au plan en cours
+
+MozyPro:
+  language: en
+  MozyPro:
+    go_to_acct: Mozy Admin Console
+    start_using_mozy: Start using Mozy
+    #pending removal
+    skip_stash: Don't Show This Again
+    logout: LOG OUT
+    survey_industry: Financial Services
+    survey_num_employees: 251-500
+    survey_contact_res: Online Other
+    bill_info: Billing Information
+    bill_hist: Billing History
+    admin_quick_start: Go to Quick Start for MozyPro Administrators
+    man_res: Manage Resources
+
+MozyHome:
+  language: en
+  MozyHome:
+    go_to_acct: Go to Account
+    acct_page_link: account page
+    resend_verify_email_link: Resend
+    back_2_login_link: Back to Login Page
+    logout: Log Out
+    acct_link: Account Home
+    plan_link: My Plan
+    devices_link: My Computer
+    profile_link: My Profile
+    dl_link: Download Backup Software
+    stash_link: Download Mozy Sync
+    logout_link: Log Out
+    know_base_link: Mozy Knowledge Base
+    winclient_man_link: Windows Client Manual
+    macclient_man_link: OS X Client Manual
+    support_page_link: MozyHome Support Portal
+    verify_mail_subject:  Please verify your email for MozyHome
+    verify_mail_success:  Email Address has been verified
+    verify_mail_banner: Email Address Verified
+    free_mail_subject:  Welcome to MozyHome!
+    gender: Male
+    birth_year: 1970
+    survey_num_coworkers: 1,000-9,999
+    job_cat:  Technology Related
+    job_role: IT Consultant
+    job_industry: Aerospace/Travel
+    my_account: My Account
+    refer_link: Referrals
+    upgrade_link: Upgrade
+
+MozyPro Ireland:
+  language: en-gb
+  MozyPro:
+    go_to_acct: Mozy Admin Console
+    start_using_mozy: Start using Mozy
+    #pending removal
+    skip_stash: Don't Show This Again
+    logout: LOG OUT
+    survey_industry: Government
+    survey_num_employees: 2000+
+    survey_contact_res: Conference/Trade Show
+    bill_info: Billing Information
+    bill_hist: Billing History
+    admin_quick_start: Go to Quick Start for MozyPro Administrators
+    man_res: Manage Resources
+
+MozyHome Ireland:
+  language: en-gb
+  MozyHome:
+    go_to_acct: Go to Account
+    acct_page_link: account page
+    resend_verify_email_link: Resend
+    back_2_login_link: Back to Login Page
+    logout: Log Out
+    acct_link: Account Home
+    plan_link: My Plan
+    devices_link: My Computer
+    profile_link: My Profile
+    dl_link: Download Backup Software
+    stash_link: Download Mozy Sync
+    logout_link: Log Out
+    know_base_link: Mozy Knowledge Base
+    winclient_man_link: Windows Client Manual
+    macclient_man_link: OS X Client Manual
+    support_page_link: MozyHome Support Portal
+    verify_mail_subject:  Please verify your email for MozyHome
+    verify_mail_success:  Email Address has been verified
+    verify_mail_banner: Email Address Verified
+    free_mail_subject:  Welcome to MozyHome!
+    gender: Female
+    birth_year: 1971
+    survey_num_coworkers: 50-99
+    job_cat:  Technology Related
+    job_role: Database Administration
+    job_industry: Health Care
+    my_account: My Account
+    refer_link: Referrals
+    upgrade_link: Upgrade
+
+MozyPro UK:
+  language: en-gb
+  MozyPro:
+    go_to_acct: Mozy Admin Console
+    start_using_mozy: Start using Mozy
+    #pending removal
+    skip_stash: Don't Show This Again
+    logout: LOG OUT
+    survey_industry: Insurance
+    survey_num_employees: 501-1000
+    survey_contact_res: Radio
+    bill_info: Billing Information
+    bill_hist: Billing History
+    admin_quick_start: Go to Quick Start for MozyPro Administrators
+    man_res: Manage Resources
+
+MozyHome UK:
+  language: en-gb
+  MozyHome:
+    go_to_acct: Mozy Admin Console
+    acct_page_link: account page
+    resend_verify_email_link: Resend
+    back_2_login_link: Back to Login Page
+    logout: Log Out
+    acct_link: Account Home
+    plan_link: My Plan
+    devices_link: My Computer
+    profile_link: My Profile
+    dl_link: Download Backup Software
+    stash_link: Download Mozy Sync
+    logout_link: Log Out
+    know_base_link: Mozy Knowledge Base
+    winclient_man_link: Windows Client Manual
+    macclient_man_link: OS X Client Manual
+    support_page_link: MozyHome Support Portal
+    verify_mail_subject:  Please verify your email for MozyHome
+    verify_mail_success:  Email Address has been verified
+    verify_mail_banner: Email Address Verified
+    free_mail_subject:  Welcome to MozyHome!
+    gender: Male
+    birth_year: 1972
+    survey_num_coworkers: 500-999
+    job_cat:  Non-Technology Related
+    job_role: Education
+    job_industry: Education
+    my_account: My Account
+    refer_link: Referrals
+    upgrade_link: Upgrade
+
+MozyPro Germany:
+  language: de
+  MozyPro:
+    go_to_acct: Mozy Admin Console
+    #pending translation
+    start_using_mozy: Start using Mozy
+    #pending removal
+    skip_stash: Dies nicht mehr anzeigen
+    start_using_mozy: Start using Mozy
+    logout: ABMELDEN
+    survey_industry: Finanzleistungen
+    survey_num_employees: 1001-2000
+    survey_contact_res: Online-Werbung
+    bill_info: Rechnungsangaben
+    bill_hist: Rechnungsverlauf
+    admin_quick_start: Zur Schnellstartanleitung für MozyPro-Administratoren wechseln.
+    man_res: Ressourcen verwalten
+
+MozyHome Germany:
+  language: de
+  MozyHome:
+    go_to_acct: Mozy Admin Console
+    acct_page_link: Kontoseite
+    resend_verify_email_link: Erneut senden
+    back_2_login_link: Zurück zur Anmeldeseite
+    logout: ABMELDEN
+    acct_link: Konto-Startseite
+    dl-win: Download für Win
+    dl-mac: Download für Mac
+    acct_link: Konto-Startseite
+    plan_link: Mein Tarif
+    devices_link: Arbeitsplatz
+    profile_link: Mein Profil
+    dl_link: Backup-Software herunterladen
+    logout_link: Abmelden
+    know_base_link: Mozy-Wissensdatenbank
+    winclient_man_link: Windows-Client-Handbuch
+    macclient_man_link: OS-X-Client-Handbuch
+    verify_mail_subject:  Bitte bestätigen Sie Ihre E-Mail für MozyHome
+    verify_mail_success:  Die E-Mail-Adresse wurde bestätigt
+    verify_mail_banner: E-Mail-Adresse überprüft
+    free_mail_subject:  Willkommen bei MozyHome!
+    gender: Weiblich
+    birth_year: 1969
+    survey_num_coworkers: 100-499
+    job_cat:  Technikbezogen
+    job_role: Projektmanagement Entwicklung
+    job_industry: Produzent (technisch)
+    change_plan:  Aktualisieren
+    my_account: Mein Konto
+    refer_link: Weiterempfehlungen
+    upgrade_link: Aktualisieren
+
+MozyPro France:
+  language: fr
+  MozyPro:
+    go_to_acct: Console d'administration Mozy
+    #pending translation
+    start_using_mozy: Start using Mozy
+    #pending removal
+    skip_stash: Ne plus afficher ce message
+    logout: DÉCONNEXION
+    survey_industry: Services financiers
+    survey_num_employees: 6-20
+    survey_contact_res: Autre en ligne
+    bill_info: Informations de facturation
+    bill_hist: Historique de facturation
+    admin_quick_start: Accédez au guide de démarrage rapide des administrateurs MozyPro.
+    man_res: Gérer les ressources
+
+MozyHome France:
+  language: fr
+  MozyHome:
+    go_to_acct: Mozy Admin Console
+    acct_page_link: page de votre compte
+    resend_verify_email_link: Renvoyer
+    back_2_login_link:  Retour à la page de connexion
+    logout: DÉCONNEXION
+    dl-win: Télécharger pour Windows
+    dl-mac: Télécharger pour Mac
+    acct_link: Accueil du compte
+    plan_link: Mon plan
+    devices_link: Mon Ordinateur
+    profile_link: Mon profil
+    dl_link: Télécharger le logiciel de sauvegarde
+    logout_link: Déconnexion
+    know_base_link: Base de connaissances de Mozy
+    winclient_man_link: Manuel du client Windows
+    macclient_man_link: Manuel du client OS X
+    verify_mail_subject:  Vérifiez votre adresse électronique pour MozyHome
+    verify_mail_success:  L'adresse électronique a été vérifiée.
+    verify_mail_banner: Adresse électronique vérifiée
+    free_mail_subject:  Bienvenue dans MozyHome !
+    gender: Homme
+    birth_year: 1968
+    survey_num_coworkers: 2-9
+    job_cat:  Technologique
+    job_role: Administration eBusiness
+    job_industry: Conception graphique
+    change_plan:  Mettre à niveau
+    my_account: Mon Compte
+    refer_link: Parrainages
+    upgrade_link: Mettre à niveau

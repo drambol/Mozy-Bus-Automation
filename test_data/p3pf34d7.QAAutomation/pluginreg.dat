@@ -1,0 +1,179 @@
+Generated File. Do not edit.
+
+[HEADER]
+Version:0.15:$
+Arch:x86_64-gcc3:$
+
+[PLUGINS]
+Flash Player.plugin:$
+/Library/Internet Plug-Ins/Flash Player.plugin:$
+11.7.700.225:$
+1371023970000:0:1:$
+Shockwave Flash 11.7 r700:$
+Shockwave Flash:$
+2
+0:application/x-shockwave-flash:Shockwave Flash:swf:$
+1:application/futuresplash:FutureSplash Player:spl:$
+QuickTime Plugin.plugin:$
+/Library/Internet Plug-Ins/QuickTime Plugin.plugin:$
+7.7.1:$
+1369301160000:0:1:$
+The QuickTime Plugin allows you to view a wide variety of multimedia content in web pages. For more information, visit the <A HREF=http://www.apple.com/quicktime>QuickTime</A> Web site.:$
+QuickTime Plug-in 7.7.1:$
+40
+0:video/mp4:MPEG-4 media:mp4:$
+1:audio/x-ac3:AC3 audio:ac3:$
+2:video/x-m4v:Video:m4v:$
+3:application/x-sdp:SDP stream descriptor:sdp:$
+4:audio/AMR:AMR audio:AMR:$
+5:application/x-rtsp:RTSP stream descriptor:rtsp,rts:$
+6:video/3gpp2:3GPP2 media:3g2,3gp2:$
+7:audio/mpeg:MPEG audio:mpeg,mpg,m1s,m1a,mp2,mpm,mpa,m2a,mp3,swa:$
+8:audio/mpeg3:MP3 audio:mp3,swa:$
+9:application/sdp:SDP stream descriptor:sdp:$
+10:application/x-mpeg:AMC media:amc:$
+11:video/x-msvideo:Video For Windows:avi,vfw:$
+12:video/mpeg:MPEG media:mpeg,mpg,m1s,m1v,m1a,m75,m15,mp2,mpm,mpv,mpa:$
+13:audio/aac:AAC audio:aac,adts:$
+14:video/sd-video:SD video:sdv:$
+15:audio/x-gsm:GSM audio:gsm:$
+16:audio/x-caf:CAF audio:caf:$
+17:audio/3gpp:3GPP media:3gp,3gpp:$
+18:audio/mp3:MP3 audio:mp3,swa:$
+19:video/avi:Video For Windows:avi,vfw:$
+20:audio/mp4:MPEG-4 media:mp4:$
+21:audio/x-aiff:AIFF audio:aiff,aif,aifc,cdda:$
+22:video/x-mpeg:MPEG media:mpeg,mpg,m1s,m1v,m1a,m75,m15,mp2,mpm,mpv,mpa:$
+23:video/3gpp:3GPP media:3gp,3gpp:$
+24:audio/x-mpeg:MPEG audio:mpeg,mpg,m1s,m1a,mp2,mpm,mpa,m2a,mp3,swa:$
+25:audio/x-aac:AAC audio:aac,adts:$
+26:audio/3gpp2:3GPP2 media:3g2,3gp2:$
+27:video/quicktime:QuickTime Movie:mov,qt,mqv:$
+28:audio/x-wav:WAVE audio:wav,bwf:$
+29:audio/x-mp3:MP3 audio:mp3,swa:$
+30:audio/x-mpeg3:MP3 audio:mp3,swa:$
+31:audio/x-m4a:AAC audio:m4a:$
+32:audio/ac3:AC3 audio:ac3:$
+33:audio/x-m4p:AAC audio:m4p:$
+34:audio/x-m4b:AAC audio book:m4b:$
+35:audio/aiff:AIFF audio:aiff,aif,aifc,cdda:$
+36:video/msvideo:Video For Windows:avi,vfw:$
+37:audio/basic:uLaw/AU audio:au,snd,ulw:$
+38:audio/wav:WAVE audio:wav,bwf:$
+39:audio/vnd.qcelp:QUALCOMM PureVoice audio:qcp,qcp:$
+iPhotoPhotocast.plugin:$
+/Library/Internet Plug-Ins/iPhotoPhotocast.plugin:$
+7.0:$
+1369280667000:0:1:$
+iPhoto6:$
+iPhotoPhotocast:$
+1
+0:application/photo:iPhoto 700::$
+DirectorShockwave.plugin:$
+/Library/Internet Plug-Ins/DirectorShockwave.plugin:$
+11.6.8r638:$
+1349254795000:0:1:$
+Adobe Shockwave for Director Netscape plug-in, version 11.6.8:$
+Shockwave for Director:$
+1
+0:application/x-director:Shockwave for Director:dcr,dir,dxr:$
+JavaAppletPlugin.plugin:$
+/Library/Internet Plug-Ins/JavaAppletPlugin.plugin:$
+Java 7 Update 09:$
+1348549124000:0:1:$
+Displays Java applet content, or a placeholder if Java is not installed.:$
+Java Applet Plug-in:$
+21
+0:application/x-java-applet;javafx=2.2.3:Java applet::$
+1:application/x-java-applet;version=1.4:Java applet::$
+2:application/x-java-applet;jpi-version=1.7.0_09:Java applet::$
+3:application/x-java-applet;version=1.2.1:Java applet::$
+4:application/x-java-applet;version=1.2.2:Java applet::$
+5:application/x-java-applet;version=1.3:Java applet::$
+6:application/x-java-vm:Java applet::$
+7:application/x-java-applet;version=1.1.1:Java applet::$
+8:application/x-java-vm-npruntime:Java applet::$
+9:application/x-java-applet;version=1.2:Java applet::$
+10:application/x-java-applet;version=1.7:Java applet::$
+11:application/x-java-applet;version=1.4.1:Java applet::$
+12:application/x-java-applet;version=1.1.2:Java applet::$
+13:application/x-java-applet:Basic Java Applets:javaapplet:$
+14:application/x-java-applet;version=1.1:Java applet::$
+15:application/x-java-applet;version=1.1.3:Java applet::$
+16:application/x-java-applet;version=1.6:Java applet::$
+17:application/x-java-applet;version=1.4.2:Java applet::$
+18:application/x-java-applet;deploy=10.9.2:Java applet::$
+19:application/x-java-applet;version=1.3.1:Java applet::$
+20:application/x-java-applet;version=1.5:Java applet::$
+AdobePDFViewerNPAPI.plugin:$
+/Library/Internet Plug-Ins/AdobePDFViewerNPAPI.plugin:$
+11.0.0:$
+1348459651000:0:0:$
+Adobe® Acrobat® Plug-in for Web Browsers, Version 11.0.0:$
+Adobe Acrobat NPAPI Plug-in, Version 11.0.0:$
+8
+0:application/vnd.adobe.pdf:Acrobat Portable Document Format:pdf:$
+1:application/vnd.adobe.pdfxml:Acrobat XML Portable Document Format:pdfxml:$
+2:application/vnd.adobe.x-mars:Acrobat XML Portable Document Format:mars:$
+3:application/vnd.adobe.xdp+xml:XML Data Package:xdp:$
+4:application/vnd.fdf:Acrobat Forms Data Format:fdf:$
+5:application/vnd.adobe.xfd+xml:FormFlow99 Data File:xfd:$
+6:application/pdf:Acrobat Portable Document Format:pdf:$
+7:application/vnd.adobe.xfdf:Acrobat Forms Data Format in XML:xfdf:$
+Flip4Mac WMV Plugin.plugin:$
+/Library/Internet Plug-Ins/Flip4Mac WMV Plugin.plugin:$
+2.5.0.1:$
+1347668150000:0:1:$
+The Flip4Mac WMV Plugin allows you to view Windows Media content using QuickTime.:$
+Flip4Mac Windows Media Plugin:$
+13
+0:video/x-ms-asf:Windows Media Video:asf:$
+1:video/x-ms-asx:Windows Media Playlist:asx:$
+2:audio/x-ms-wax:Windows Media Playlist:wax:$
+3:application/x-ms-wmp:Windows Media Plugin::$
+4:video/x-ms-wmp:Windows Media Video:wmp:$
+5:application/x-mplayer2:Windows Media Plugin::$
+6:video/x-ms-wmx:Windows Media Playlist:wmx:$
+7:video/x-ms-wm:Windows Media Video:wm:$
+8:video/x-ms-wvx:Windows Media Playlist:wvx:$
+9:video/x-ms-wmv:Windows Media Video:wmv:$
+10:video/x-ms-asf-plugin:Windows Media Plugin::$
+11:audio/x-ms-wma:Windows Media Audio:wma:$
+12:application/asx:Windows Media Plugin::$
+SharePointBrowserPlugin.plugin:$
+/Library/Internet Plug-Ins/SharePointBrowserPlugin.plugin:$
+14.2.4:$
+1345791600000:0:1:$
+Microsoft Office for Mac SharePoint Browser Plug-in:$
+SharePoint Browser Plug-in:$
+1
+0:application/x-sharepoint:Microsoft Office for Mac SharePoint Browser Plug-in::$
+Silverlight.plugin:$
+/Library/Internet Plug-Ins/Silverlight.plugin:$
+5.1.10411.0:$
+1334127450000:0:1:$
+5.1.10411.0:$
+Silverlight Plug-In:$
+2
+0:application/x-silverlight:Microsoft Silverlight:xaml:$
+1:application/x-silverlight-2:Microsoft Silverlight:xaml:$
+MeetingJoinPlugin.plugin:$
+/Library/Internet Plug-Ins/MeetingJoinPlugin.plugin:$
+4.0.7577.5:$
+1329984000000:0:1:$
+Microsoft Lync 2010 Meeting Join Plug-in:$
+Lync Meeting Join Plug-in:$
+1
+0:application/vnd.microsoft.communicator.ocsmeeting:Microsoft Lync 2010 Meeting Join Plug-in::$
+
+[INVALID]
+/Library/Internet Plug-Ins/SharePointWebKitPlugin.webplugin:$
+1345791600000:$
+/Library/Internet Plug-Ins/AdobePDFViewer.plugin:$
+1348459644000:$
+/Library/Internet Plug-Ins/nsIQTScriptablePlugin.xpt:$
+1352404443000:$
+/Library/Internet Plug-Ins/Quartz Composer.webplugin:$
+1352404447000:$
+/Library/Internet Plug-Ins/flashplayer.xpt:$
+1369955679000:$

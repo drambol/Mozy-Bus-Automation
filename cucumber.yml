@@ -1,0 +1,6 @@
+common: -color --format pretty -r features
+default: -p common
+exclude_qa5: -e "configuration|users/machine" -p common
+parallel: --format json --out report_parallel<%= ENV['TEST_ENV_NUMBER'] %>.json --format html --out html-report/report<%= ENV['TEST_ENV_NUMBER'] %>.html --format ParallelTests::Cucumber::FailuresLogger --out rerun.txt -p common
+parallel_rerun: --format json --out report_rerun<%= ENV['TEST_ENV_NUMBER'] %>.json --format html --out html-report/report_rerun<%= ENV['TEST_ENV_NUMBER'] %>.html --format ParallelTests::Cucumber::FailuresLogger --out secondrun.txt -p common
+local:  --format json --out report.json --format html --out html-report/local_report.html --format rerun --out rerun.txt -p common

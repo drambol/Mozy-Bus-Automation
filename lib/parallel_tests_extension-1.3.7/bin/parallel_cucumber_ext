@@ -1,0 +1,10 @@
+#!/usr/bin/env ruby
+
+# enable local usage from cloned repo
+root = File.expand_path("../..", __FILE__)
+$LOAD_PATH << "#{root}/lib" if File.exist?("#{root}/Gemfile")
+
+require "parallel_tests"
+require "parallel_tests_extension"
+
+ParallelTests::CLI.new.run(["--type", "cucumber"] + ARGV)

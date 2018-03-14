@@ -1,0 +1,2171 @@
+function parent_form(node) {
+  while (true) {
+    node = node.parentNode;
+    if (!node || node.nodeName == 'BODY') {
+      return null;
+    }
+    if (node.nodeName == 'FORM') {
+      return node;
+    }
+  }
+}
+
+var _admin = "admin";
+var _user = "user";
+
+var _loggedout_message="ERROR: LOGGED OUT";
+var _noerror_message='<div class="noerrors"></div>';
+var _user_group_auto_completer = new Array();
+
+function check_for_no_errors(request){
+  responsetext = request.responseText.stripScripts();
+  setTimeout(function() {request.responseText.evalScripts()}, 10);
+
+  if(responsetext.substring(0,_loggedout_message.length) == _loggedout_message){
+    location.href = "/login/admin";
+    return false;
+  }else if(responsetext.substring(0,_noerror_message.length) != _noerror_message || request.statusText.substring(0,2) != "OK"){
+    location.href = "/admin/error";
+    return false;
+  }
+  return true;
+}
+
+var _row_visible;
+if (document.all) _row_visible = "block"; //IE4+ specific code
+else _row_visible = "table-row"; //Netscape and Mozilla
+var _row_invisible = "none";
+
+function get_container(node, tagName){
+  while(node && node.tagName != tagName)
+    node = node.parentNode;
+  return node;
+}
+
+function row_toggle(linkobj){
+  var parts = linkobj.id.split(/-at-l-/);
+  var table = $(parts[0]);
+  var prefix = table.id + '-';
+  var idnum = parts[1];
+  var descendants = document.getElementsByClassName("ac-" + idnum, table);
+  if(descendants.length > 0){
+    if(table_row_is_hidden(descendants[0])){
+      for(i=0;i<descendants.length;i++){
+        //let's only expand immediate children
+        var descendant_classes = descendants[i].className.split(" ");
+        if(descendant_classes[0] == "") descendant_classes.shift();
+        if(descendant_classes.length == 1 || descendant_classes[descendant_classes.length - 1] == "ac-" + idnum){
+          show_table_row(descendants[i]);
+        }
+      }
+      $(prefix + 'at-a-'+idnum).src="/images/shared/expanded_root.png";
+    }else{ // hide all descendants
+      $(prefix + 'at-a-'+idnum).src="/images/shared/collapsed_root.png";
+      for(i=0;i<descendants.length;i++){
+        hide_table_row(descendants[i]);
+        tempObj = $(prefix + 'at-a-'+descendants[i].id.replace(/.*at-/,''));
+        if(!tempObj.src.match(/blank/)){
+          tempObj.src="/images/shared/collapsed_root.png";
+        }
+      }
+    }
+  }
+}
+
+function hide_table_row(obj){
+  if(typeof obj == "string") obj=$(obj);
+  obj.style.display = _row_invisible;
+}
+
+function show_table_row(obj){
+  if(typeof obj == "string") obj=$(obj);
+  obj.style.display = _row_visible;
+}
+
+function table_row_is_hidden(obj){
+  if(typeof obj == "string") obj=$(obj);
+  return (obj.style.display != _row_visible)
+}
+
+/* needed by the server to create skeletor graphs */
+function save_timezone_offset() {
+  if(get_cookie('tzo') == false){
+    set_cookie('tzo', (new Date()).getTimezoneOffset(), false, false, '/');
+  }
+}
+save_timezone_offset();
+function set_cookie(name, value){
+  var expires, domain, path;
+  switch(arguments.length){
+    case 5:
+      path = arguments[4];
+    case 4:
+      domain = arguments[3];
+    case 3:
+      expires = arguments[2];
+  }
+  if(expires){
+    var time = expires;
+    expires = new Date();
+    expires.setTime(time * 1000);
+  }
+  document.cookie = name + '=' + value + (expires ? '; expires=' + expires.toUTCString() : '') + (path ? '; path=' + path : '') + (domain ? '; domain=' + domain : '');
+}
+
+function get_cookie(name){
+  var match = document.cookie.match(new RegExp('(^|; )' + name + '=([^;]*)($|;)'));
+  return match ? match[2] : '';
+}
+
+
+/* Methods for the cp modules */
+function query_string_hash() {
+  var params = window.location.search.substring(1).split('&');
+  var ret = {};
+  $A(params).each(function(p){
+    var parts = p.split('=');
+    ret[parts[0]] = parts[1];
+  });
+  return ret;
+}
+
+var isIE7 = true;//navigator.userAgent.toLowerCase().indexOf('msie 7') != -1;
+function animate_module(mod, open, scroll_to, delete_when_done) {
+  // IE7 chokes on the animations right now
+  if (open) {
+    if (isIE7) {
+      mod.show();
+      if (scroll_to) new Effect.ScrollTo(mod);
+    } else Effect.BlindDown(mod, {
+      duration: 0.2,
+      afterFinish: function() { if (scroll_to) new Effect.ScrollTo(mod); }
+    });
+  } else {
+    if (isIE7) {
+      if (delete_when_done) $(mod).remove();
+      else mod.hide();
+    }
+    else Effect.BlindUp(mod, {
+      duration: 0.2,
+      afterFinish: function() { if (delete_when_done) $(mod).remove(); }
+    });
+  }
+}
+
+function find_parent_module_box(el) {
+  mod = $(el);
+  if (!mod) return null;
+
+  while(!mod.hasClassName('adminbox-active')) {
+    mod = $(mod.parentNode);
+    if (!mod) return null;
+  }
+  return mod;
+}
+function get_titlebar_link(mod) {
+  mod = $(mod);
+  if (!mod) return null;
+  return $$('#' + mod.id + ' h2 a').last();
+}
+
+// Disables all forms in the module specified by mod
+// Note: the timing on this call is sensitive. This function
+//       should be called on a module only after the module has submitted
+//       its results. Otherwise, disabling it prevents the values
+//       from being submitted.
+function disable_module_content(mod){
+  mod = $(mod);
+  if (!mod) return;
+
+  // Query all the forms that are children of the main module div
+  var forms = $$('div#' + mod.id + ' form')
+
+  // Disable each form.
+  for (var i = 0; i < forms.length; i++)
+  {
+    var form_elements = forms[i].getElements()
+    for (var j = 0; j < form_elements.length; j++)
+    {
+      var is_disabled = form_elements[j].getAttribute("disabled")
+      // On IE8 getAttribute returns an empty string where as on other browsers it returns null if the attribute is not present
+      if (is_disabled == null || is_disabled == "")
+      {
+        // If we disable the control, we remember so that we can set it back later.
+        // This is necessary for the few times that we do not replace the page after a submit.
+        form_elements[j].addClassName("disabled_for_spin")
+      }
+      form_elements[j].disable()
+    }
+  }
+
+  // Disable all anchor links
+  var anchor_elements = mod.getElementsByTagName("a");
+  for (var i = 0; i < anchor_elements.length; i++)
+  {
+    var anchor = Element.extend(anchor_elements[i]);
+    var is_disabled = anchor.getAttribute("disabled");
+    // On IE8 getAttribute returns an empty string where as on other browsers it returns null if the attribute is not present
+    if (is_disabled == null || is_disabled == "")
+    {
+      //On IE8 querying with getElementsByTagName will return the raw html elements then we need to extend it so the prototype
+      //functions will be available, firefox(it rocks) does not have that problem.
+      anchor.addClassName("disabled_for_spin");
+      anchor.style.cursor = "wait";
+    }
+  }
+}
+
+// Called as part of the onsubmit event handler. Prevents double-submit
+// on forms.
+function allow_submit(mod)
+{
+  mod = $(mod);
+  if (!mod) return false;
+
+  if (mod.hasClassName("disable_submit_form"))
+  {
+  	return false
+  }
+  mod.addClassName("disable_submit_form")
+  return true
+}
+
+// Undo any disables that we set through disable_module_content.
+function enable_module_content(mod)
+{
+  mod = $(mod);
+  if (!mod) return;
+
+  // Reset the class so the net submit will work.
+  mod.removeClassName("disable_submit_form")
+
+  // Query all the forms that are children of the main module div
+  var forms = $$('div#' + mod.id + ' form')
+
+  // enable controls in each form.
+  for (var i = 0; i < forms.length; i++)
+  {
+    var form_elements = forms[i].getElements()
+    for (var j = 0; j < form_elements.length; j++)
+    {
+      // We only enable controls that were disabled by disable_module_content
+      if (form_elements[j].hasClassName("disabled_for_spin"))
+      {
+        form_elements[j].removeClassName("disabled_for_spin")
+        form_elements[j].enable()
+      }
+    }
+  }
+
+  // enable all the disabled anchor links
+  var anchor_links = mod.getElementsByTagName("a");
+  for (var i = 0; i < anchor_links.length; i++)
+  {
+    var anchor = Element.extend(anchor_links[i]);
+    if (anchor.hasClassName("disabled_for_spin"))
+    {
+      anchor.removeClassName("disabled_for_spin");
+      anchor.style.cursor = "";
+    }
+  }
+}
+
+// Show the 'processing indicator'. Right now, this is a spinning icon on the
+// upper left of the module.
+function show_loading(mod) {
+  mod = $(mod);
+  if (!mod) return;
+
+  var titlebar_link = get_titlebar_link(mod);
+  if (titlebar_link) {
+    titlebar_link.addClassName('loading');
+  } else if (mod && mod.hasClassName('spinner')) {
+    new Effect.Appear(mod, {duration: 0.2});
+  }
+}
+function hide_loading(mod) {
+  mod = $(mod);
+  if (!mod) return;
+
+  enable_module_content(mod)
+  var titlebar_link = get_titlebar_link(mod);
+  if(titlebar_link){
+    titlebar_link.removeClassName('loading');
+  }
+  if (tab_widgets[mod]) {
+    tab_widgets[mod].resetNodes();
+  }
+  if (mod.hasClassName('spinner')) new Effect.Fade(mod, {duration: 0.2});
+}
+function is_loading(mod) {
+  var titlebar_link = get_titlebar_link(mod);
+  if(titlebar_link && titlebar_link.hasClassName('loading')) return true;
+  return false;
+}
+
+function open_module(mod, scroll_to) {
+  mod = $(mod);
+  if (!mod) return;
+
+  if(mod.hasClassName('adminbox-active')) {
+    // already-open module
+    if (scroll_to) new Effect.ScrollTo(mod);
+    return;
+  };
+
+  mod.removeClassName('adminbox-inactive');
+  mod.addClassName('adminbox-active');
+  var content_div = $(mod.id + '-content');
+  if (content_div.childNodes.length > 0) {
+    update_nav_hilites();
+    animate_module(content_div, true, scroll_to);
+  } else {
+    show_loading(mod);
+    if(content_div.hasClassName('iframe')){
+      new IframeUpdater(content_div, mod.readAttribute('module_url'), {
+        showIframe: true,
+        onComplete: function() {
+          onAjaxComplete();
+          animate_module(content_div, true, scroll_to);
+          hide_loading(mod);
+        }
+      });
+    }
+    else{
+      new Ajax.Updater(content_div, mod.readAttribute('module_url'), {
+        insertion: Insertion.Bottom,
+        evalScripts: true,
+        method: 'get',
+        onComplete: function() {
+          animate_module(content_div, true, scroll_to);
+          hide_loading(mod);
+        },
+        on500: function(response) {
+          document.open();
+          document.write(response.responseText);
+          document.close();
+        }
+      });
+    }
+  }
+}
+function close_module(mod) {
+  if (!mod) return;
+  mod.addClassName('adminbox-inactive');
+  mod.removeClassName('adminbox-active');
+  animate_module($(mod.id + '-content'), false);
+  update_nav_hilites();
+}
+function toggle_module(mod_name) {
+  var mod = $(mod_name);
+  if (!mod) return;
+  if (is_loading(mod)) return;
+  if (mod.hasClassName('adminbox-active')) {
+    close_module(mod);
+  } else {
+    open_module(mod, true);
+  }
+}
+
+function update_nav_hilites() {
+  if(!$('is_module_view')) return;
+  $$('#nav-cat-' + controller_name + ' .nav-link').each(function(el){
+    var mod_name = el.readAttribute('module');
+    if(!$(el.firstChild).readAttribute) return;
+    if (mod_name && $(mod_name)) {
+      if ($(mod_name).hasClassName('adminbox-active')) el.addClassName('active');
+      else el.removeClassName('active');
+    } else if ($(el.firstChild).readAttribute('href') == window.location.pathname) {
+      el.addClassName('active');
+    }
+  });
+}
+
+var controller_name;
+function show_initial(ignore_wizard) {
+  if($('wizard-overlay') && !ignore_wizard) return;
+  controller_name = window.location.pathname.split('/')[1];
+  var module = query_string_hash()['module'];
+  if(module) {
+    open_module($(module), false);
+    update_nav_hilites();
+  } else {
+    // show all by default?
+    show_all_modules(true);
+    update_nav_hilites();
+  }
+}
+
+function show_all_modules(initial_load) {
+  $$('.adminbox-inactive').filter(function(el){return el.visible();}).each(function(el){
+    /* for dashboard -- don't always want to unroll all modules at start */
+    /* This may need to be made more flexible eventually */
+    if(!initial_load || !el.hasClassName('start-closed')) open_module(el, false);
+  });
+}
+
+function update_module_title(mod, title) {
+  mod = $(mod);
+  if (!mod) return;
+
+  var title_link = $(mod).getElementsByClassName('title')[0]
+  title_link.innerHTML = title;
+}
+
+function show_new_module(mod_title, url_opts, parent, e, scroll_to) {
+  if (e && (e.ctrlKey || e.metaKey)) return false;
+  if ($('popup-body')) return true;
+  var name = module_name_from_params(url_opts);
+  if ($(name)) {
+    open_module(name, scroll_to); return false;
+  }
+
+  // mini-routing. yay!
+  var url = "/" + url_opts['controller'] + "/" + url_opts['action'];
+  if (url_opts['id']) url += '/' + url_opts['id'];
+  url_opts = $H(url_opts).reject(function(k,v){return k[0] == 'controller' || k[0] == 'action' || k[0] == 'id'});
+  if(url_opts.length > 0) {
+    url += '?' + url_opts.map(function(v) {return '' + v[0] + '=' + v[1] + '&';}).join('');
+  }
+
+  /* display the module frame */
+  var template = $('module-template');
+  var module_box = $(template.cloneNode(true));
+  module_box.id = name;
+  module_box.getElementsByTagName('div')[0].id = name + '-content';
+  module_box.style.display = '';
+  module_box.setAttribute('module_url', url);
+  var title_link = module_box.getElementsByClassName('title')[0]
+  title_link.innerHTML = mod_title.escapeHTML();
+  if(parent && $(parent))
+    $('inner-content').insertBefore(module_box, $(parent).nextSibling);
+  else
+    $('inner-content').appendChild(module_box);
+  open_module(module_box, scroll_to);
+  return false;
+}
+
+function delete_module(el) {
+  if (tab_widgets[el]) {
+    delete tab_widgets[el];
+  }
+  animate_module(el, false, false, true);
+}
+
+function reload_module(mod) {
+  mod = $(mod);
+  if (!mod) return;
+
+  show_loading(mod);
+  var url;
+  spcs = mod.getElementsByClassName('specific_refresh_url');
+  if (spcs && spcs.length > 0 && spcs[0]) {
+    url = spcs[0].innerHTML;
+  } else url = mod.getAttribute('module_url');
+  var content_div = $(mod.id + '-content');
+  if(content_div.hasClassName('iframe')){
+    new IframeUpdater(content_div, url, {
+      reload: true,
+      showIframe: true,
+      onComplete: function() {
+        animate_module(content_div, true, false);
+        hide_loading(mod);
+      }
+    });
+  }
+  else{
+    new Ajax.Updater(content_div, url, {
+      evalScripts: true,
+      method: 'get',
+      onComplete: function() {
+        animate_module(content_div, true, false);
+        hide_loading(mod);
+      },
+      on500: function(response) {
+        document.open();
+        document.write(response.responseText);
+        document.close();
+      }
+    });
+  }
+}
+
+function refresh_module(mod) {
+  /* by-id refreshes */
+  if ($(mod)) {
+    mod = $(mod);
+    if (mod.hasClassName('adminbox-active')) reload_module(mod);
+    return;
+  }
+  /* wildcard refreshes */
+  if (mod.match && mod.match(/\*$/)) {
+    var matching = mod.substring(0, mod.length - 1);
+    $$('.adminbox-active').each(function(m){
+      if (m.id.match(matching)) reload_module(m);
+    });
+    return;
+  }
+}
+
+function popup_module(mod, no_close) {
+  var url, wid;
+  if ($(mod)) {
+    mod = $(mod);
+    url = mod.readAttribute('module_url');
+    wid = 'popupwin' + mod.id.gsub('-', '');
+  } else {
+    url = mod;
+    wid = 'popupwin';
+  }
+  window.open(url,wid,'width=800,height=600,resizable=yes,scrollbars=yes,location=yes,toolbar=yes');
+  if(!no_close) delete_module(mod);
+}
+
+function popup_link_unless_in_popup(url) {
+  if (!$('popup-body')) {
+    window.open(url,'popupwin',
+      'width=800,height=600,resizable=yes,scrollbars=yes,location=yes,toolbar=yes');
+    return false;
+  }
+  else return true;
+}
+
+function onAjaxComplete() {
+  update_nav_hilites();
+}
+
+Ajax.Responders.register({
+  onComplete: onAjaxComplete
+});
+
+function module_name_from_params(url) {
+  var mod = url['controller'] + '-' + url['action'];
+  if(url['id']) mod = mod + '-' + url['id']
+  return mod
+}
+
+function toggle_subscription_tables(id) {
+  var detail_obj = $('sub-detail-' + id)
+  var edit_obj = $('sub-edit-' + id)
+  var top_obj = $('sub-' + id)
+  if (detail_obj.style.display == '' || edit_obj.style.display == '') {
+    detail_obj.hide()
+    edit_obj.hide()
+    top_obj.addClassName('clickable');
+    top_obj.removeClassName('active');
+  } else {
+    detail_obj.show()
+    edit_obj.hide()
+    top_obj.addClassName('active');
+    top_obj.removeClassName('clickable');
+  }
+}
+
+function toggle_mini_table_details(id) {
+  $(id).toggle();
+}
+
+/* preload a couple of images */
+var preloads = [
+  "/images/module-arrow-open.gif",
+  "/images/module-loading.gif",
+  "/images/inline-close.gif",
+  "/images/nav-menu-bullet.gif",
+  "/images/nav-menu-bullet-active.gif"
+];
+preloads = preloads.map(function(el){
+  var img = new Image();
+  img.src = el;
+  return img;
+});
+
+/* Make sure the given element is in view */
+Effect.ScrollTo = Class.create();
+Object.extend(Object.extend(Effect.ScrollTo.prototype, Effect.Move.prototype), {
+  initialize: function(element) {
+    this.element = $(element);
+    if(!this.element) throw(Effect._elementDoesNotExistError);
+
+    this.originalTop = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop;
+    this.originalLeft = window.pageXOffset || document.documentElement.scrollLeft || document.body.scrollLeft;
+    this.originalBottom = this.originalTop + (window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight);
+
+    var dx = 0; dy = 0, height = 0, width = 0, el = this.element;
+    height = el.offsetHeight;
+    width = el.offsetWidth;
+
+    while(el != null) {
+      dx += el.offsetLeft;
+      dy += el.offsetTop;
+      el = el.offsetParent;
+    }
+
+    if (dy < this.originalTop) {
+      dy = dy - 25;
+    } else if ((dy + height) > this.originalBottom) {
+      if (height > (this.originalBottom - this.originalTop)) {
+        // bigger than screen, show top
+        dy = dy - 25;
+      } else {
+        dy = (dy + height + 5) - (this.originalBottom - this.originalTop);
+      }
+    } else {
+      dy = this.originalTop;
+    }
+    if (dy < 0) dy = 0;
+
+    var options = Object.extend({
+      x: (dx - this.originalLeft), y: (dy - this.originalTop), duration: 0.2
+    }, arguments[1] || {});
+    this.start(options);
+  },
+  setup: function() {
+  },
+  update: function(position) {
+    window.scrollTo(this.originalLeft + position * this.options.x,
+      this.originalTop + position * this.options.y);
+  }
+});
+
+// TODO23 - we are monkeypatching prototype here, and it's unknown whether this behavior works fully with new
+//          prototype. I had to make a change to make the following code work with prototype 1.6.0.3. Would be good
+//          to take a closer look and see if this is really what we want to do (also verify that module
+//          behavior dependant on this patch still works. I did some basic testing, but not enough.) Original comment follows:
+// little hack -- this way we can send back either javascript commands or html to Ajax.Updater
+// and it will do "the right thing" either way
+Ajax.Updater.prototype.origUpdateContent = Ajax.Updater.prototype.updateContent;
+Ajax.Updater.prototype.updateContent = function(responseContent) {
+  if (this.getHeader('Content-Type').indexOf('text/javascript') > -1) {
+    this.container = {};
+  }
+  this.origUpdateContent(responseContent);
+};
+
+// Gets time object for the given timestamp string
+function get_date_object(timestamp_string) {
+  var timestamp_string_unescaped = unescape(timestamp_string.replace(/\+/gi, ' '));
+  return new Date(timestamp_string_unescaped);
+}
+
+var sessionTimer = {
+  timer: null,
+
+  // Checks whether to logout (when the timer expires) based on the last_activity cookie variable
+  postTimeout: function() {
+    // Parse time and calculate new time_left
+    var last_activity = get_cookie('last_activity')
+    var last_activity_time = get_date_object(last_activity);
+    var initial_time_left = get_cookie('time_left');
+    var current_time = new Date();
+
+    var time_left = parseInt(initial_time_left) - Math.floor((current_time.getTime() - last_activity_time.getTime()) / 1000);
+    if(time_left <= 0)
+    {
+      var dest_after_relogin = escape(window.location.pathname + window.location.search); // Goto the current location after re-login
+      location.href = "/login/proactive_timeout?dest=" + dest_after_relogin;
+    }
+    else
+      sessionTimer.processTimeout(time_left.toString());
+  },
+
+  // Sets client side timer for the session timeout
+  processTimeout: function(time_left) {
+    clearTimeout(sessionTimer.timer); // Remove the last timer before creating a new one
+    if(time_left != '')  // This cookie variable must be non-empty, for timeout to happen
+      sessionTimer.timer = setTimeout(postTimeoutFunc = function() {
+                             sessionTimer.postTimeout();
+                           }, parseInt(time_left)*1000); // Time left, sent by the server, is in seconds
+  }
+};
+
+Object.extend(Ajax.Updater.prototype, {
+  _parentInitialize: Ajax.Updater.prototype.initialize,
+
+  initialize: function(container, url, options) {
+    // Overriding Ajax Updater's options to process timeout on all 200 responses
+    Object.extend(options,{
+      on200: function() {
+        var time_left = get_cookie('time_left');
+        sessionTimer.processTimeout(time_left);
+      }
+    });
+
+    this._parentInitialize.call(this, container, url, options); // super()
+  }
+});
+/*
+IframeUpdater:
+
+Used for form submits that can't use AJAX (e.g. file uploads)
+as well as to load modules w/ complex javascript that can't
+simply be eval'ed (e.g. edit client config).
+
+parameters:
+  container:    the node where the iframe and/or contents will be inserted
+  url:          the url to load in the iframe, or null if we are binding to an element (FORM or A)
+  options:
+    bindTo:     the node to bind to (FORM or A) on click/submit using its target attribute
+    showIframe: instead of replacing container's innerHTML with the contents of the iframe (default),
+                we simply make the iframe visible. useful when the content needs to be in its own window
+    onComplete: function to call once loading is complete
+    name:       the name of the iframe. will default to "iframe_" + bindTo.id or a random identifier
+                when applicable (Safari/Konq needs it to have a name).
+    reload:     if the iframe already exists, it will reload it instead of using the url. useful for
+                calling external reloads where the iframe is allowed to navigate away from the starting
+                url
+
+*/
+function IframeUpdater(container, url, options){
+  var iframe;
+  var me = this;
+  var isIE = window.attachEvent && !window.opera;
+  var isIE9Above = (isIE ? parseFloat(navigator.appVersion.split("MSIE")[1]) >= 9 : false);
+
+  var iframeLoad = function(){me.onload();}
+  var iframeResize = function(){
+    var width = iframeWin.document.body.firstChild.offsetWidth;
+    var height = iframeWin.document.body.firstChild.offsetHeight;
+    iframe.style.height = (height + 20) + 'px';
+    if(width > container.offsetWidth) {
+      iframe.style.width = width + 'px';
+    }
+  }
+  var name = options.name ? options.name : 'iframe_' + (options.bindTo ? options.bindTo.id : Math.random());
+
+  // if showIframe == true and iframe already exists, we just reuse it
+  iframe = container.getElementsByTagName('IFRAME')[0];
+  if(iframe && options.showIframe){
+    var iframeWin = (window.frames[name] && window.frames[name].document ? window.frames[name] : iframe.contentWindow);
+    if(options.onComplete){
+      var onComplete = function(){
+        options.onComplete();
+        Event.stopObserving(iframe, 'load', onComplete);
+      }
+      Event.observe(iframe, 'load', onComplete);
+    }
+    if(options.reload)
+      iframeWin.document.location.reload();
+    else
+      iframeWin.document.location.href = url;
+    return;
+  }
+
+  // IE fun:
+  // 1. IE doesn't like dynamic assignment of name attributes.
+  // 2. We need to prevent the secure/insecure warning.
+  if(isIE && !isIE9Above){
+    iframe = document.createElement('<iframe name="iframe_' + name + '">');
+    iframe.src = options.bindTo ? 'javascript:"";' : url;
+  }
+  else{
+    iframe = document.createElement('IFRAME');
+    iframe.name = name;
+    if(!options.bindTo)
+      iframe.src = url;
+  }
+  // konq and ie (and possibly others) need the iframe to be "visible" (e.g. not display:none) as it loads,
+  // otherwise weirdness ensues
+  var toggleParent = (container.style.display == 'none');
+  iframe.style.border = 0;
+  iframe.style.height = 0;
+  iframe.style.width = '100%';
+  iframe.scrolling = 'no';
+  iframe.frameBorder = 0;
+  container.appendChild(iframe);
+  if(toggleParent){
+    container.style.display = 'block';
+    container.style.width = container.offsetWidth + 'px';
+    container.style.visibility = 'hidden';
+    container.style.position = 'absolute';
+  }
+  else{
+    iframe.style.visibility = 'hidden';
+    iframe.style.position = 'absolute';
+  }
+
+  Event.observe(iframe, 'load', iframeLoad);
+
+  if(options.bindTo)
+    options.bindTo.target = iframe.name;
+
+  var iframeWin;
+  this.onload = function(){
+    iframeWin = (window.frames[name] && window.frames[name].document ? window.frames[name] : iframe.contentWindow);
+    if(options.showIframe){
+      window.setTimeout(function(){
+        if(toggleParent){
+          container.style.position = 'static';
+          container.style.display = 'none';
+          container.style.visibility = 'visible';
+          container.style.width = 'auto';
+          container.style.height = 'auto';
+        }
+        else{
+          iframe.style.visibility = 'inherit';
+          iframe.style.position = 'static';
+        }
+        window.setTimeout(iframeResize, 50);
+        if(options.onComplete){
+          window.setTimeout(options.onComplete, 10);
+        }
+        Event.stopObserving(iframe, 'load', iframeLoad);
+        Event.observe(iframe, 'load', iframeResize);
+        Event.observe(iframeWin, 'resize', iframeResize);
+      }, 0)
+    }
+    else{
+      window.setTimeout(function(){
+        container.innerHTML = iframeWin.document.body.innerHTML;
+        if(options.onComplete){
+          window.setTimeout(options.onComplete, 10);
+        }
+      }, 0)
+    }
+  }
+}
+
+var tab_widgets = {};
+function TabWidget(id, selected){
+  var me = this;
+  this.id = id;
+  this.selected = selected;
+  this.resetNodes();
+}
+TabWidget.prototype = {
+  setSelected : function(selected){
+    // make selected tab stays the same once the module/page reloads
+    set_cookie(this.id, selected, false, false, '/');
+    for(i = 0; i < this.tabs.childNodes.length; i++){
+      this.tabs.childNodes[i].className = i == selected ? 'selected' : '';
+      this.panes.childNodes[i].className = i == selected ? 'selected' : '';
+    }
+    this.selected = selected;
+  },
+
+  getSelected : function() {
+    if (this.selected == undefined) {
+      for(i = 0; i < this.tabs.childNodes.length; i++){
+        if (this.tabs.childNodes[i].className == 'selected') {
+          this.selected = i;
+          break;
+        }
+      }
+    }
+    return this.selected;
+  },
+
+  resetNodes : function(){
+    var me = this;
+    this.node = $(this.id);
+    this.tabs = this.node.getElementsByTagName('UL')[0];
+    this.tabs.onclick = function(event){me.click(event && event.target ? event.target : window.event.srcElement)}
+    this.panes = this.tabs.nextSibling;
+    while(this.panes && this.panes.tagName != 'UL')
+      this.panes = this.panes.nextSibling;
+  },
+
+  click : function(node){
+    while(node && node.tagName != 'LI')
+      node = node.parentNode;
+    var tabs = this.tabs.getElementsByTagName('LI');
+    var i = 0;
+    for(var i = 0; i < tabs.length; i++){
+      if(tabs[i] == node){
+        this.setSelected(i);
+        break;
+      }
+    }
+  },
+
+  next : function() {
+    newSelected = this.getSelected() + 1;
+    if (newSelected < this.tabs.getElementsByTagName('LI').length) {
+      this.setSelected(newSelected);
+    }
+  },
+
+  back : function() {
+    newSelected = this.getSelected() - 1;
+    if (newSelected >= 0) {
+      this.setSelected(newSelected);
+    }
+  }
+}
+// find or create a tab widget
+function getTabWidget(tab_widget) {
+  if (!tab_widgets[tab_widget] || tab_widgets[tab_widget].node != $(tab_widget + '-tabs')) {
+    tab_widgets[tab_widget] = new TabWidget(tab_widget + '-tabs');
+  }
+  return tab_widgets[tab_widget];
+}
+// handler for the first click on a <ul> intended to become a TabWidget. it
+// will instantiate the TabWidget object if it wasn't already there, including
+// a new onclick handler overriding this one
+function tabClick(e, tab_widget){
+  var clicked = e.target ? e.target : e.srcElement;
+  while(clicked && !clicked.tagName)
+    clicked = clicked.parentNode;
+  if(clicked.tagName == 'LI'){
+    getTabWidget(tab_widget).click(clicked);
+  }
+}
+// navigate relatively through a tab widget
+function tabNext(tab_widget) { getTabWidget(tab_widget).next(); }
+function tabBack(tab_widget) { getTabWidget(tab_widget).back(); }
+
+function toggleDelegability(node, enable){
+  if(enable){
+    node.className = 'grant';
+    node.firstChild.disabled = false;
+    node.firstChild.checked = true;
+    toggleSubpartners(node.previousSibling, enable);
+  }
+  else{
+    node.className = 'grant disabled';
+    node.firstChild.disabled = true;
+    node.firstChild.checked = false;
+    toggleSubpartners(node.previousSibling, enable);
+  }
+  if(node.firstChild.name == 'delegable_2' || node.firstChild.name == 'delegable_7'){
+    $('capability_chart').className = ($('capability_2').checked ? 'has_roles_capability ' : '') + ($('capability_7').checked ? 'has_partners_capability ' : '');
+  }
+}
+function toggleSubpartners(node, enable){
+  if(enable){
+    node.className = 'grant_s';
+    node.firstChild.disabled = false;
+    node.firstChild.checked = true;
+  }
+  else{
+    node.className = 'grant_s disabled';
+    node.firstChild.disabled = true;
+    node.firstChild.checked = false;
+  }
+}
+
+/* yoinked from the Low Pro Prototype extensions */
+// Allows you to trigger an event element.
+Object.extend(Event, {
+    trigger: function(element, event, fakeEvent) {
+        element = $(element);
+        fakeEvent = fakeEvent || { type: event };
+        for (id in this.cache) {
+          if(Event.cache[id][event]){
+            this.cache[id][event][0].call(element,fakeEvent);
+            return;
+          }
+        }
+    }
+});
+
+function StatusUpdater(contentNode, url, frequency){
+  var me = this;
+  this.update = function(){
+    new Ajax.Updater(contentNode, url, {
+      method: 'get',
+      onComplete: function() {
+        if(contentNode.innerHTML != '') {
+          window.setTimeout(me.update, frequency * 1000);
+        }
+        else {
+          contentNode.innerHTML = 'Done';
+        }
+      }
+    });
+  }
+  window.setTimeout(me.update, frequency * 1000);
+}
+
+function getWindowHeight() {
+  var windowHeight = 0;
+  if (typeof(window.innerHeight) == 'number') {
+    windowHeight = window.innerHeight;
+  }
+  else {
+    if (document.documentElement && document.documentElement.clientHeight) {
+      windowHeight = document.documentElement.clientHeight;
+    }
+    else {
+      if (document.body && document.body.clientHeight) {
+        windowHeight = document.body.clientHeight;
+      }
+    }
+  }
+  return windowHeight;
+}
+
+function resizeWizardOverlayWithWindow() {
+  $('wizard-overlay').style.height = $$('body')[0].getDimensions().height + 'px';
+}
+
+var wizard_spinner_img;
+function show_wizard_window() {
+  $$('body', 'html').each(function(el){el.style.overflow = 'hidden';});
+  Event.observe(window, 'resize', resizeWizardOverlayWithWindow);
+  resizeWizardOverlayWithWindow();
+  new Effect.Appear('wizard-overlay', { duration: 0.8, from: 0.0, to: 0.85 });
+  new Effect.Appear('wizard-frame', { duration: 0.8, from: 0.0, to: 1.0, afterFinish: function() {hide_loading('wizard-loading-spinner');} });
+  wizard_spinner_img = new Image();
+  wizard_spinner_img.src = '/images/wizard-spinner.gif';
+  if($('wizard-content').hasClassName('fulltext')) {
+    $('wizard-frame').show();
+    var h = $('wizard-content').getDimensions().height;
+    $('wizard-frame').style.height = (h + 150) + 'px';
+    $('wizard-content').style.height = h + 'px';
+    $('wizard-frame').style.top = '225px';
+    $$('body', 'html').each(function(el){el.style.overflow = '';});
+    $('wizard-buttons').style.top = ($('wizard-content').getDimensions().height - 40) + 'px'
+    $('wizard-frame').hide();
+  }
+}
+
+function hide_wizard_window(callback_url) {
+  new Effect.Fade('wizard-frame', { duration: 0.6 });
+  if (callback_url) new Ajax.Request(callback_url, {method:'get', asynchronous:false}); //this request needs to be complete before reloading the dashboard
+  new Effect.Fade('wizard-overlay', { duration: 0.6, from: 0.85, to: 0.0, afterFinish: function(){
+    $$('body', 'html').each(function(el){el.style.overflow = '';});
+    Event.stopObserving(window, 'resize', resizeWizardOverlayWithWindow);
+    window.location.reload();
+  } });
+}
+
+// Prototype can't do this implicitly
+function disable_all_form_submits_except(submit) {
+  $$('input[type=image]', 'input[type=submit]').each(function(e) { if (e != submit) e.disabled='disabled'; })
+}
+
+function findOptionByValue(selectControl, value){
+  for(var i = 0; i < selectControl.length; i++){
+    if(selectControl[i].value == value)
+      return selectControl[i];
+  }
+  return false;
+}
+
+function rebuildDiscounts(node){
+  var discountNodes = node.getElementsByTagName("LI");
+  var discounts = [];
+  for(var i = 0; i < discountNodes.length; i++){
+    var inputs = discountNodes[i].getElementsByTagName("INPUT");
+    if(inputs[0].value.match(/^\d+$/) && inputs[1].value.match(/^(\d+|\d*\.\d+)$/)){
+      var min = parseInt(inputs[0].value);
+      var discount = parseFloat(inputs[1].value);
+      if(discount >= 0 && discount < 100){
+        discounts.push([min, discount / 100]);
+      }
+    }
+  }
+  discounts.sort(function(a, b){return parseInt(a[0]) - parseInt(b[0])});
+  var new_vals = [];
+  for(var i = 0; i < discounts.length; i++){
+    new_vals.push(discounts[i][0] + ":" + discounts[i][1]);
+  }
+  var field = node.parentNode.getElementsByTagName("INPUT")[0];
+  field.value = new_vals.join("|");
+}
+
+function updateDiscount(node){
+  var inputs = node.getElementsByTagName("INPUT");
+  inputs[0].className = inputs[0].value.match(/^\d+$/) ? "" : "error"
+  inputs[1].className = inputs[1].value.match(/^(\d+|\d*\.\d+)$/) ? "" : "error"
+  if(inputs[0].value.match(/^\d+$/) && inputs[1].value.match(/^(\d+|\d*\.\d+)$/)){
+    var discount = parseFloat(inputs[1].value);
+    inputs[1].className = discount >= 0 && discount < 100 ? "" : "error"
+    if(discount >= 0 && discount < 100){
+      var field = node.getElementsByTagName("SPAN")[1];
+      var field2 = node.parentNode.parentNode.previousSibling;
+      while(!field2.tagName)
+        field2 = field2.previousSibling;
+      field2 = field2.previousSibling;
+      while(!field2.tagName)
+        field2 = field2.previousSibling;
+      field2 = field2.getElementsByTagName("INPUT")[0];
+      field.innerHTML = (parseFloat(field2.value) * (1.0 - discount/100.0)).toFixed(2)
+    }
+  }
+  rebuildDiscounts(node.parentNode);
+}
+
+function removePricingRow(node){
+  var container = node.parentNode;
+  if(container.getElementsByTagName('LI').length > 1)
+    container.removeChild(node);
+  updateMachines(container);
+}
+function checkPricing(node){
+  var rows = node.getElementsByTagName("LI");
+  for(var i = 0; i < rows.length; i++){
+    inputs = rows[i].getElementsByTagName("INPUT");
+    var price = inputs[2];
+    var price_gb = inputs[3];
+    if(!price.value.match(/^\d+(\.\d+)?$|^\.\d+$/) || parseFloat(price.value) < 0)
+      price.value = '0.00';
+    if(!price_gb.value.match(/^\d+(\.\d+)?$|^\.\d+/) || parseFloat(price_gb.value) < 0)
+      price_gb.value = '0.00';
+    if(rows.length == 1 && parseFloat(price.value) == 0.0 && parseFloat(price_gb.value) == 0.0){
+      node.nextSibling.firstChild.disabled = true;
+      return;
+    }
+  }
+  node.nextSibling.firstChild.disabled = false;
+}
+function updateMachines(node){
+  var rows = node.getElementsByTagName("LI");
+  var min = 1;
+  for(var i = 0; i < rows.length; i++){
+    var inputs = rows[i].getElementsByTagName("INPUT");
+    if(!inputs[0].value || !inputs[0].value.match(/^\d+$/) || parseInt(inputs[0].value) < min)
+      inputs[0].value = min;
+    else
+      min = parseInt(inputs[0].value);
+    if(i < rows.length - 1 && (!inputs[1].value || !inputs[1].value.match(/^\d+$/)) || inputs[1].value != '' && parseInt(inputs[1].value) < min)
+      inputs[1].value = min;
+    else
+      min = parseInt(inputs[1].value);
+    min++;
+    inputs[4].disabled = rows.length == 1;
+  }
+}
+
+function removeAndRebuildDiscounts(node){
+  var container = node.parentNode.parentNode;
+  container.removeChild(node.parentNode);
+  rebuildDiscounts(container);
+}
+
+function removeAndUpdateMachines(node){
+  var container = node.parentNode.parentNode;
+  container.removeChild(node.parentNode);
+  updateMachines(container);
+}
+
+function toggleSiteSection(node, selectIt, dialect){
+  var navNode = node.parentNode;
+  while(navNode && (navNode.tagName == 'LI' || navNode.tagName == 'UL' && !navNode.id))
+    navNode = navNode.parentNode;
+  var containerNode = navNode.parentNode.nextSibling;
+  while(containerNode.tagName != 'DIV')
+    containerNode = containerNode.nextSibling;
+
+  switch(node.parentNode.className){
+    case 'closed':
+      var subsections = node.parentNode.getElementsByTagName('UL')[0];
+      if(!subsections){
+        new Ajax.Updater(node.parentNode, '/site_branding/get_nav?id=' + node.id.replace(/site_section_/, '') + '&dialect=' + dialect, {
+          insertion: Insertion.Bottom,
+          evalScripts: true,
+          method: 'get',
+          onComplete: function() {
+            if(!selectIt)
+              node.parentNode.className = node.className = 'open';
+          }
+        });
+        node.parentNode.className = node.className = 'busy';
+      }
+    case 'empty':
+      if(selectIt){
+        selectSectionNode(node.id, navNode);
+        if($(node.id + '_content') && $(node.id + '_content').innerHTML){
+          node.parentNode.className = node.className = 'selected';
+        }
+        else{
+          node.parentNode.className = node.className = 'busy' + (node.parentNode.className == 'empty' ? ' empty' : '');
+          var sectionNode = document.createElement('DIV');
+          sectionNode.style.display = 'none';
+          sectionNode.id = node.id + '_content';
+          containerNode.appendChild(sectionNode);
+          new Ajax.Updater(sectionNode, '/site_branding/get_section?id=' + node.id.replace(/site_section_/, '') + '&dialect=' + dialect, {
+            evalScripts: true,
+            method: 'get',
+            onComplete: function() {
+              sectionNode.style.display = 'block';
+              node.parentNode.className = node.className = node.parentNode.className == 'busy empty' ? 'empty selected' : 'selected';
+            }
+          });
+        }
+      }
+      break;
+    case 'open':
+      if(selectIt){
+        selectSectionNode(node.id, navNode);
+        if($(node.id + '_content') && $(node.id + '_content').innerHTML){
+          node.parentNode.className = node.className = 'selected';
+        }
+      }
+      break;
+  }
+}
+function selectSectionNode(id, navNode){
+  if(navNode.className && $(navNode.className)){
+    $(navNode.className).parentNode.className = $(navNode.className).className = ($(navNode.className).className == 'selected') ? 'open' : 'empty';
+    if($(navNode.className + '_content') && $(navNode.className + '_content').innerHTML){
+      $(navNode.className + '_content').style.display = 'none';
+    }
+  }
+  navNode.className = id;
+  if($(id + '_content') && $(navNode.className + '_content').innerHTML)
+    $(id + '_content').style.display = 'block';
+}
+
+function selectValue(node, value){
+  for(var i = 0, length = node.length; i < length; i++) {
+    if(node[i].value == value) {
+      node.selectedIndex = i;
+      break;
+    }
+  }
+}
+
+function cloneTemplate(template, container) {
+  var clone = $(template.cloneNode(true));
+  clone.style.display = '';
+  if (container) container.appendChild(clone);
+  return clone;
+}
+
+function removeLastChild(container) {
+  if (container.hasChildNodes()) {
+    var children = container.childNodes;
+    var lastChild = children[children.length - 1];
+    container.removeChild(lastChild);
+  }
+}
+
+function changeFilter(node) {
+  if(node.options[node.selectedIndex].value == "custom_filter") {
+    $('custom_filter_select').style.visibility = "visible";
+  } else {
+    node.form.onsubmit();
+  }
+}
+
+function addFilter(node) {
+  if(node.selectedIndex != 0) {
+    var selectedNode = node.options[node.selectedIndex];
+    var filterData = selectedNode.className.evalJSON();
+
+    switch(filterData.filterAs) {
+    case 'string':
+      addStringFilterOption(selectedNode, filterData);
+    }
+    node.selectedIndex = 0;
+  }
+}
+
+function addStringFilterOption(selectedNode, filterData) {
+  var table = $('search_box').tBodies[0];
+  var row_id = selectedNode.value+'_row_'+(table.rows.length-1)+'';
+  var select_id = selectedNode.value+'_select_'+(table.rows.length-1)+'';
+  table.insertBefore(
+    Builder.node('tr', {'id': row_id}, [
+      Builder.node('td', {'colspan': table.rows[0].cells.length/2}),
+      Builder.node('th', [Builder.node('label', {'for': selectedNode.value}, selectedNode.value+':')]),
+      Builder.node('td', [Builder.node('select',
+        {
+          'id': select_id,
+          'name': 'custom_filter_conditions[]'
+        }, [
+        Builder.node('option', {'value': selectedNode.value+': none'}),
+        Builder.node('option', {'value': selectedNode.value+': is'}, 'is'),
+        Builder.node('option', {'value': selectedNode.value+': is_not'}, 'is not'),
+        Builder.node('option', {'value': selectedNode.value+': contains'}, 'contains'),
+        Builder.node('option', {'value': selectedNode.value+': not_contains'}, "doesn't contain")
+        ]), Builder.node('input', {
+          'style': 'margin-left: 0.5em;',
+          'type': 'text',
+          'name': 'custom_filter_options[]'}),
+          Builder.node('a', {'style': 'margin-left: 0.5em; text-decoration: none;',
+            'href': '#', 'title': 'remove filter item',
+            'onclick': 'removeFilterRow(this)'}, '[-]')])
+    ]),
+    $('custom_filter_select')
+  );
+  $(select_id).selectedIndex = 0;
+}
+
+
+function removeFilterRow(childNode) {
+  childNode.parentNode.parentNode.parentNode.removeChild(childNode.parentNode.parentNode);
+}
+
+function reset_selects(type, input, year, month, day) {
+    var value = input.checked, parent = $(input).up();
+    var arr = parent.childElements()
+
+    arr.each(function(node){
+        switch(node.id)
+        {
+            case 'job_range_'+type+'_at_1i':
+                node.value = year;
+                node.disabled = value;
+                break;
+            case 'job_range_'+type+'_at_2i':
+                node.value = month;
+                node.disabled = value;
+                break;
+            case 'job_range_'+type+'_at_3i':
+                node.value = day;
+                node.disabled = value;
+         }
+    })
+}
+
+function set_role_type(node,cur_element){
+  var node = $('role_parent_role_id');
+  for(var i = 0; i < node.length; i++){
+    if(node[i].className == 'subpartner'){
+      node[i].disabled=(cur_element.selectedIndex==0);
+    }
+  }
+  while(node.selectedIndex > 0 && node[node.selectedIndex].disabled){
+    node.selectedIndex--;
+  }
+  node = $('role_preferred_parent_user_group_id');
+  if(node){
+    node.disabled=(cur_element.selectedIndex==0);
+  }
+  var inputs=$('preferred_parent_user_group_id_div').getElementsByTagName('input');
+  for(var i=0; i< inputs.length; i++){
+    inputs[i].disabled=(cur_element.selectedIndex==0);
+  }
+
+  if($('preferred_parent_user_group_id_div')) {
+    var user_group_span = $('preferred_parent_user_group_id_div').getElementsByTagName('span');
+    var search_button = user_group_span ? user_group_span[0] : null;
+    if(search_button) {
+      search_button.setStyle( { visibility: ( cur_element ? ( cur_element.selectedIndex == 0  ? "hidden" : "visible" ) : "visible" )
+                              }
+                            ) ;
+    }
+  }
+}
+
+function editQuota(machine_id, quota_field_html) {
+  Effect.BlindDown('change_quota_for_'+machine_id, {duration:0.1});
+  $('quota_limit_for_'+machine_id).innerHTML = quota_field_html;
+  $('edit_quota_for_'+machine_id).hide();
+  $('cancel_edit_quota_for_'+machine_id).show();
+  return false;
+}
+
+function cancelEditQuota(machine_id, original_text) {
+  Effect.BlindUp('change_quota_for_'+machine_id, {duration:0.1});
+  $('quota_limit_for_'+machine_id).innerHTML = original_text;
+  $('edit_quota_for_'+machine_id).show();
+  $('cancel_edit_quota_for_'+machine_id).hide();
+  return false;
+}
+
+function prepareQuotaForm(button, button_string, machine_id) {
+  quota_field = $('quota_in_gb_for_'+machine_id);
+  quota_field.name = 'quota_in_gb';
+  button.value = button_string;
+}
+
+function showToolTip(obj_id, tooltip_string) {
+  tooltip = $("tooltip_for_"+obj_id);
+  tooltip.show();
+  tooltip.innerHTML = tooltip_string;
+}
+
+function hideToolTip(obj_id) {
+  $("tooltip_for_"+obj_id).hide();
+}
+
+function handleJobRun(request, id) {
+  if(Prototype.Browser.IE){
+  $('job_index_last_run_'+ id).setStyle("font-style: italic; background-color: #ffffd7");
+  }else{
+    // yellow fade transition to 'Queued'
+    new Effect.Highlight($('job_index_last_run_'+ id), {startcolor: '#ffffd7', restorecolor: '#ebebeb'});
+  }
+  updateJobStatus([id]);
+}
+
+var UPDATE_JOB_PERIODICAL_EXECUTER = [];
+var all_previous_form_params = new Hash();
+var queuedJobIds = new Hash();  // used as a Set
+
+function stopAllUpdateJobStatusPE() {
+  for (var i = 0; i < UPDATE_JOB_PERIODICAL_EXECUTER.length; i++) {
+    UPDATE_JOB_PERIODICAL_EXECUTER[i].stop();
+  }
+  UPDATE_JOB_PERIODICAL_EXECUTER = [];
+}
+
+function updateJobRow(id) {
+  new Ajax.Request('/jobs/status', {asynchronous:false, method: 'get',  evalScripts:true, parameters:'id=' + id,
+    onComplete: function(transport) {
+      var $jobTr = $('job_' + id) ? $('job_' + id) : $('job_index_last_run_' + id).up('tr');
+      $jobTr.replace(transport.responseText);
+      var status = $('job_index_status_' + id).innerHTML;
+      if (status != 'queued') {
+        if (Prototype.Browser.IE) {
+          $('job_index_last_run_' + id).setStyle("background-color: #ebebeb");
+        } else {
+          // yellow fade transition from 'Queued'
+          new Effect.Highlight($('job_index_last_run_' + id), {startcolor: '#ffffd7', restorecolor: '#ebebeb'});
+        }
+        queuedJobIds.unset(id);
+      }
+    }
+  });
+}
+
+function updateJobStatus(jobIds) {
+  $A(jobIds).each(function(jobId) {
+    queuedJobIds.set(jobId, true); // true is just a non-null value
+  });
+  if (UPDATE_JOB_PERIODICAL_EXECUTER.length == 0) {
+    pollStatusWhileQueued();
+  }
+}
+
+function set_cancellation_reason(id, authenticity_token) {
+  new Ajax.Request('/partner/set_cancellation_reason?reason='+$('cancellation_reasons_select_'+id).value+'&pro_partner_id='+id, {
+    method: 'post',
+    parameters: {"authenticity_token":authenticity_token},
+    onSuccess: function(transport) {
+      $('cancellation_reasons_'+id).hide();
+      $('partner-show-'+id+'-delete_form').show();
+    }
+  });
+}
+
+function pollStatusWhileQueued() {
+  var queuedJobPeriodicalExecuter = new PeriodicalExecuter(function(pe) {
+    if (queuedJobIds.keys().length > 0) {
+      var ids = queuedJobIds.keys().join(",");
+      new Ajax.Request('/jobs/progress', {asynchronous:false, method: 'get',  evalScripts:true, parameters:'ids=' + ids,
+        onComplete: function(transport) {
+          // expecting comma-separated Job ids in response, or single id, or blank
+          if (transport.responseText.length > 0) {
+            var disqueuedIds = transport.responseText.split(",");
+            for (var i = 0; i < disqueuedIds.length; i++) {
+              var id = disqueuedIds[i];
+              updateJobRow(id);
+            }
+          }
+        }
+      });
+    }
+  }, 10);
+  UPDATE_JOB_PERIODICAL_EXECUTER.push(queuedJobPeriodicalExecuter);
+}
+
+function emailAutoCompleter(subscribers,autocomplete_choices, token){
+    new Ajax.Autocompleter(subscribers, autocomplete_choices, "/jobs/find_admin", {
+    paramName: "username",
+    minChars: 2,
+    parameters:'authenticity_token=' + encodeURIComponent(token),
+    tokens: [',', '\n']
+  });
+}
+
+function getFilenameFromFullPath(full_path){
+    var seperator;
+    if(full_path[0] == '/'){
+        //the full path is a mac, linux or network path
+        seperator = '/';
+    }
+    else{
+        seperator = "\\";
+    }
+    var paths = full_path.split(seperator);
+    return paths[paths.length - 1]
+}
+
+function UpdateDataShuttlePrice() {
+    var key_ids = $$('input[name="key_ids_str"]')[0].value.split(',')
+    var ds_sizes = $('ds_sizes_str').value.split(',')
+    var data_shuttle_service_total_price = 0.0
+    for (var ii=0; ii<ds_sizes.length; ii++) {
+      size_string = ds_sizes[ii]
+      var discount, cost;
+      var this_shuttle_service_price = 0.0
+      for(var i=0; i<key_ids.length; i++) {
+        shuttle_size = $('shuttle_size_' + key_ids[i]).value
+        if (shuttle_size != size_string) {
+          continue
+        }
+        discount = $$('input[name="ordered_licenses[' + key_ids[i] + '][discount]"]')[0].value
+        discount = (discount == '') ? 0 : (parseFloat(discount)/100)
+        if (discount < 0){
+          discount = 0;
+        }
+        if (discount > 1){
+          discount = 1;
+        }
+        cost = parseFloat($$('input[name="ordered_licenses[' + key_ids[i] + '][cost_of_service]"]')[0].value)
+        this_shuttle_service_price += (1 - discount) * cost
+      }
+      data_shuttle_service_total_price += this_shuttle_service_price
+      var display_price = $('data_shuttle_total_price_'+size_string).innerHTML
+      $('data_shuttle_total_price_'+size_string).innerHTML = display_price.replace(/-?[\d,?\.?]+/, formatNumber(this_shuttle_service_price));
+    }
+    var charge_for_key_quota = parseFloat($('charge_for_key_quota') ? $$('input[name="count_and_cost[total_cost]"]')[0].value : 0)
+    var total_price = parseFloat(data_shuttle_service_total_price) + parseFloat(charge_for_key_quota)
+    if ($('vat_amount')) {
+        var vat_amount = $$('input[name="vat[amount]"]')[0].value;
+        total_price = parseFloat(total_price) + parseFloat(vat_amount)
+    }
+    var saved_total_price = total_price;
+    if ($('total_credit')){
+        var total_credit = $$('input[name="total_credit"]')[0].value;
+        var display_credit = $('total_credit').innerHTML;
+        $('total_credit').innerHTML = display_credit.replace(/-?[\d,?\.?]+/, formatNumber(total_credit));
+        total_price = parseFloat(total_price) - parseFloat(total_credit);
+    }
+    if(total_price < 0){
+        total_price = 0;
+        var display_credit = $('total_credit').innerHTML;
+        $('total_credit').innerHTML = display_credit.replace(/-?[\d,?\.?]+/, formatNumber(saved_total_price));
+    }
+    total_price = total_price.toFixed(2)
+    display_price = $('total_charge').innerHTML
+    $('total_charge').innerHTML = display_price.replace(/-?[\d,?\.?]+/, formatNumber(total_price));
+    $('raw_total_charge').value = total_price;
+}
+
+var data_shuttle_values = new Array();
+
+function set_data_shuttle_values() {
+  var inputs = document.getElementById('resource-create_new_seed_form')
+  data_shuttle_values = new Array()
+  for (var i = 0; i < inputs.length; i++) {
+    data_shuttle_values.push(inputs[i].value)
+  }
+}
+
+function get_data_shuttle_ordered_license_count() {
+  var count = 0
+  var inputs = document.getElementById('resource-create_new_seed_form')
+  for (var i = 0; i < inputs.length; i++) {
+    if (inputs[i].id && inputs[i].id.match(/ordered_licenses_.*_license_type_id/)) {count++}
+  }
+  return count
+}
+
+function has_data_shuttle_form_changed() {
+  if (data_shuttle_values.length == 0) {return true}
+  var inputs = document.getElementById('resource-create_new_seed_form')
+  if (data_shuttle_values.length != inputs.length) {return true}
+  // check to see if any visible inputs have changed
+  for (var i = 0; i < inputs.length; i++) {
+    if (inputs[i].type != "hidden" && inputs[i].id != 'submit_type' && inputs[i].value != data_shuttle_values[i]) {return true}
+  }
+  return false
+}
+
+
+// allow only numbers for an input field
+// if minus=1, allow minus sign '-'
+function filter_numbers(e, minus){ // allow only numbers for an input field
+var event = e || window.event
+var key = event.keyCode || event.which
+
+if (minus==1 && key==45)
+  return true;
+//8:backspace, 9:tab, 13:enter, 27:escape, 37:arrow left/%, 39:arrow right, 46:delete/.
+if (key==null || key==0 || key==8 || key==9 || key==27 || key==37 || key==39 || key==46 || (key>=48 && key<=57))
+  return true;
+
+event.returnValue = false // prevents event action in IE
+event.preventDefault() // prevents event action in non-IE browsers
+return false;
+}
+
+// format 1234.567 to 1,234.56
+function formatNumber(value){
+  if(isNaN(value))
+    return value;
+  var places = 2;
+  var delimiter = ",";
+  var decimal = ".";
+  var aDigits = parseFloat(value).toFixed(places).split(".");
+  aDigits[0] = aDigits[0].split("").reverse().join("").replace(/(\d{3})(?=\d)/g, "$1" + delimiter).split("").reverse().join("");
+  return aDigits.join(decimal);
+}
+
+function finishCybersourcePageLoading(spinner, form, submit_button_id){
+  var ccinfo = (form == undefined ? "frm" : form) + "-" + "ccinfo"
+  changeCcInfoStatus(form, true);
+  submit_button = submit_button_id == undefined ? $(ccinfo).select('[name="billing_submit_button"]')[0] : $(submit_button_id);
+  submit_button.enable();
+  if(spinner != undefined){
+    hide_loading(spinner);
+  }
+}
+
+function changeCcInfoStatus(form, enabled){
+  var ccinfo = (form == undefined ? "frm" : form) + "-" + "ccinfo";
+  $(ccinfo).select('input').concat($(ccinfo).select('select')).each(function(element){
+     if(enabled == true){
+       element.enable();
+     }else{
+       element.disable();
+     }
+  });
+}
+
+var toSubmitCcForms = {};
+function notSubmitCcForm(form, not_disable_form){
+  toSubmitCcForms[form] = false;
+  if (not_disable_form == undefined || not_disable_form == false)
+    changeCcInfoStatus(form, false);
+}
+
+function requireSubmitCcForm(form){
+  toSubmitCcForms[form] = true;
+  changeCcInfoStatus(form, true);
+}
+
+function toSubmitCcForm(form){
+  return toSubmitCcForms[form];
+}
+
+function requireCcInfoForReseller(licenseTypes){
+  if($('company_type') && 'reseller' == $('company_type').value){
+    var needCcInfo = false;
+    licenseTypes.each(function(licenseType){
+      var keys = $$('#partner-new-content form')[0]['licenses[' + licenseType + ']'].value;
+      var quota = $$('#partner-new-content form')[0]['quota[' + licenseType + ']'].value;
+      if(parseInt(keys) > 0 || parseInt(quota) > 0){
+	needCcInfo = true;
+      }
+    });
+    needCcInfo = needCcInfo || trimString($$('#partner_new_form-ccinfo input[name="card_accountNumber"]')[0].value) != ""
+    if(!needCcInfo){
+      notSubmitCcForm('partner_new_form');
+      $('save_card_for_reseller').value = false;
+    }else{
+      requireSubmitCcForm('partner_new_form');
+      $('save_card_for_reseller').value = true;
+    }
+    return needCcInfo;
+  }
+  requireSubmitCcForm('partner_new_form');
+  $('save_card_for_reseller').value = true;
+  return true;
+}
+
+function trimString(str){
+ if(!str){
+   return "";
+ }
+ str.replace(/^\s*/, "").replace(/\s*$/, "");
+}
+
+
+function formField(field_id, required_error_msg) {
+  this.field_id = field_id;
+  this.required_error_msg = required_error_msg;
+  return this;
+}
+formField.prototype.validate = function() {
+  var f = $(this.field_id);
+    if (f && trimString(f.value) == "") {
+      return false;
+    }
+  return true;
+}
+function showValidateResult(errorDivName, errorSummary) {
+	if (errorSummary != "")
+      $(errorDivName).innerHTML = "<ul class='flash errors'>" + errorSummary + "</ul>";
+    else
+      $(errorDivName).innerHTML = "";
+}
+
+function checkPlanNumFormat(){
+  val = parseInt(this.value, 10)
+  if(isNaN(val) || val < 0){
+    this.value = 0
+  }else{
+    this.value = val
+  }
+}
+
+var requiredPartnerFields = [];
+
+function validatePartnerFields() {
+  var isValid = true;
+  var errorSummary = "";
+  for (i = 0; i< requiredPartnerFields.length; i++) {
+    if (!requiredPartnerFields[i].validate()) {
+	  errorSummary += "<li>" + requiredPartnerFields[i].required_error_msg + "</li>"
+	  isValid = false;
+    }
+  }
+
+  showValidateResult('partner-new-errors', errorSummary);
+  return isValid;
+}
+
+var requiredCybersourceFields = [];
+
+function validateCybersourceFields() {
+  var isValid = true;
+  var errorSummary = "";
+  for (i = 0; i< requiredCybersourceFields.length; i++) {
+    if (!requiredCybersourceFields[i].validate()) {
+	  errorSummary += "<li>" + requiredCybersourceFields[i].required_error_msg + "</li>"
+	  isValid = false;
+    }
+  }
+  showValidateResult('cybersourceErrors', errorSummary);
+  return isValid;
+}
+
+// IE doesn't support 'trim', implement it
+String.prototype.trim = function(){
+  return this.replace(/^\s*/, "").replace(/\s*$/, "");
+}
+
+// choose 'No'/'Yes' in stash status
+function change_stash_status(e, account_type, id) {
+  set_stash_default_quota_edit_status(e.value == 'true', account_type, id);
+}
+
+function set_stash_default_quota_section(stash_status, edit, account_type, id) {
+  var label_stash_quota = account_type + '-label-stash-default-quota-' + id;
+  var edit_stash_quota = account_type + '-edit-stash-default-quota-' + id;
+  var value_stash_quota = account_type + '-display-stash-default-quota-' + id;
+
+  if($(label_stash_quota)){
+    $(label_stash_quota).style.display = stash_status ? '' : 'none';
+    $(edit_stash_quota).style.display = (stash_status && edit) ? '' : 'none';
+    $(value_stash_quota).style.display = (stash_status && !edit) ? '' : 'none';
+  }
+}
+
+function set_stash_default_quota_display_status(stash_status, account_type, id) {
+  set_stash_default_quota_section(stash_status, false, account_type, id);
+}
+
+function set_stash_default_quota_edit_status(stash_status, account_type, id) {
+  set_stash_default_quota_section(stash_status, true, account_type, id);
+}
+
+function set_stash_status_section(edit, account_type, id) {
+  var value_stash_status = account_type + '-display-stash-status-' + id;
+  var edit_stash_status = account_type + '-edit-stash-status-' + id;
+
+  $(value_stash_status).style.display = !edit ? '' : 'none';
+  $(edit_stash_status).style.display = edit ? '' : 'none';
+}
+
+function show_window_cover(show) {
+  var window_cover = $('window-cover');
+  if ($('window-cover') == null) {
+    window_cover = document.createElement('div').addClassName('window-cover')
+    window_cover.id = 'window-cover';
+    document.body.appendChild(window_cover);
+    window_cover = $('window-cover');
+  }
+  if (show) {
+    window_cover.style.display = 'block';
+  } else {
+    window_cover.style.display = 'none';
+  }
+}
+
+function change_stash(stash_status, account_type, id) {
+  set_stash_section(stash_status, true, account_type, id);
+}
+
+function cancel_change(stash_status, account_type, id, original_quota) {
+  set_stash_section(stash_status, false, account_type, id);
+  var edit_stash_quota = account_type + '-edit-stash-default-quota-' + id;
+  $(edit_stash_quota).value = original_quota;
+  $(account_type + '-stash-status-' + id).value = stash_status;
+}
+
+function set_stash_section(stash_status, edit, account_type, id) {
+  set_stash_default_quota_section(stash_status, edit, account_type, id);
+  set_stash_status_section(edit, account_type, id);
+
+  var change_link = account_type + '-change-link-stash-status-' + id;
+  var cancel_link = account_type + '-cancel-link-stash-status-' + id;
+
+  $(change_link).style.display = edit ? 'none' : '';
+  $(cancel_link).style.display = edit ? '' : 'none';
+}
+
+function submit_stash_status(account_type, id, form, header, content, cancel_text, continue_text) {
+  var need_confirm = (form.serialize(true)['stash_status'] == 'false');
+  if (need_confirm)  {
+    var confirm_win = new PopupWin(400, 0);
+    confirm_win.set_header(header);
+    confirm_win.set_content(content);
+    confirm_win.set_actions(
+      {
+        'text': cancel_text
+      },
+      {
+        'text': continue_text,
+        'on_ok': function(e) {
+          confirm_win.close(true);
+          form.onsubmit();
+        }
+      }
+    );
+    confirm_win.show();
+    return false;
+  } else {
+    return true;
+  }
+}
+
+/**** Popup Dialog ****/
+function PopupWin(width, height) {
+  this.width = width || 0;
+  this.height = height || 0;
+  this.window_cover = new Element('div');
+  this.window_cover.addClassName('window-cover');
+  this.window_cover.setStyle({
+    'z-index': PopupWin.z_counter += 999,
+    'display': 'none'
+  });
+  $(document.body).insert(this.window_cover);
+  this.container = new Element('div');
+  this.container.addClassName('popup-window');
+  this.container.setStyle({
+    'z-index': PopupWin.z_counter += 1,
+    'display': 'none'
+  });
+  $(document.body).insert(this.container);
+};
+PopupWin.prototype.set_size = function(width, height) {
+  this.width = width;
+  this.height = height;
+};
+PopupWin.prototype.set_header = function(header, close_bar) {
+  this.header = new Element('div');
+  this.header.addClassName('popup-window-title');
+  this.header.update(header);
+  this.container.insert(this.header);
+  if (close_bar != false) {
+    this.close_bar = new Element('div');
+    this.close_bar.addClassName('close_bar');
+    var close_link = new Element('a', {'href':'javascript:void(0);'});
+    close_link.update("x");
+    close_link.observe('click', this.close.bind(this, close_link));
+    this.close_bar.insert(close_link);
+    this.header.insert(this.close_bar);
+  }
+};
+PopupWin.prototype.set_content = function(content) {
+  this.content_container = new Element('div');
+  this.content_container.addClassName('popup-window-content');
+  this.content_container.update(content);
+  this.container.insert(this.content_container);
+};
+PopupWin.prototype.set_actions = function(cancel_action, ok_action) {
+  if (this.action_container == undefined) {
+    this.action_container = new Element('div');
+    this.action_container.addClassName('popup-window-footer');
+  }
+
+  if (ok_action) {
+    var ok_button = new Element('input', {'type':'button', 'value':ok_action.text});
+    if (ok_action.on_ok) {
+      ok_button.observe('click', function(e){
+        ok_action.on_ok.call(e);
+      });
+    }
+    this.action_container.insert(ok_button);
+  }
+
+  if (cancel_action) {
+    var cancel_button = new Element('input', {'type':'button', 'value':cancel_action.text});
+    if (cancel_action.on_cancel) {
+      cancel_button.observe('click', function(e){
+        cancel_action.on_cancel.call(e);
+      });
+    } else {
+      cancel_button.observe('click', this.close.bind(this, cancel_button));
+    }
+    this.action_container.insert(cancel_button);
+  }
+
+  this.container.insert(this.action_container);
+};
+
+var WindowSize = Class.create({
+    width: window.innerWidth || (window.document.documentElement.clientWidth || window.document.body.clientWidth),
+    height: window.innerHeight || (window.document.documentElement.clientHeight || window.document.body.clientHeight)
+});
+PopupWin.prototype.center_window = function() {
+  var window_size = new WindowSize();
+  var height = this.height;
+  if (!(height > 0))
+    height = this.container.getHeight();
+  this.container.setStyle({
+    'top': (window_size.height - height - 50 > 0 ? window_size.height - height - 50 : 0) / 2 + 'px',
+    'left': (window_size.width - this.width > 0 ? (window_size.width - this.width) : 0 ) / 2 + "px"
+  });
+};
+PopupWin.prototype.show = function() {
+  this.window_cover.style.display = 'block';
+  this.container.setStyle({
+    'width': this.width + 'px',
+    'height': this.height > 0 ? this.height + 'px' : 'auto'
+  });
+  this.center_window();
+  this.container.style.display = 'block';
+};
+PopupWin.prototype.close = function(ignore_close_fun) {
+  if (!ignore_close_fun && this.close_fun)
+    this.close_fun();
+  this.window_cover.remove();
+  this.container.remove();
+};
+
+PopupWin.prototype.add_button = function (label, url) {
+  if (!this.action_container) {
+    this.set_actions();
+  }
+
+  var button = new Element('input', {'type':'button', 'value':label,
+    'onclick':"window.location='" + url + "'"});
+  this.action_container.insert(button);
+}
+
+function show_simple_dialog(width, height, header, content, close_button_text) {
+  var popup_win = new PopupWin(width, height);
+  popup_win.set_header(header);
+  popup_win.set_content(content);
+  if (close_button_text)
+    popup_win.set_actions(
+      {
+        'text': close_button_text
+      }
+    );
+  popup_win.show();
+}
+
+function show_need_more_storage_popup(header, content, allocate_text, allocate_url, purchase_text, purchase_url) {
+  var popup_win = new PopupWin(400, 0);
+  popup_win.set_header(header, true);
+  popup_win.set_content(content);
+  if (allocate_text != '')
+    popup_win.add_button(allocate_text, allocate_url);
+  popup_win.add_button(purchase_text, purchase_url);
+  popup_win.show();
+}
+
+function confirm_enable_stash_for_all_window(header, stash_cost, cancel_text, continue_text, form) {
+  var popup_win = new PopupWin(400, 0);
+  popup_win.set_header(header, true);
+  popup_win.set_content(stash_cost);
+  popup_win.set_actions(
+    {
+    'text': cancel_text
+    },
+    {
+      'text': continue_text,
+      'on_ok': function() {
+        form.getInputs("hidden", "confirmed")[0].value = 'true';
+        form.onsubmit();
+        popup_win.close();
+      }
+    }
+  );
+  popup_win.show();
+}
+
+function show_delete_stash_popup(header, content, form) {
+  var pop_win = new PopupWin(400, 0);
+  pop_win.set_header(header);
+  pop_win.set_content(content);
+  pop_win.set_actions(
+    {
+      'text': 'Cancel'
+    },
+    {
+      'text': 'Continue',
+      'on_ok': function() {
+        form.onsubmit();
+        pop_win.close();
+      }
+    }
+  );
+  pop_win.show();
+}
+
+function send_stash_invite(user_id) {
+  var module_name = 'user-show-' + user_id;
+  show_loading(module_name);
+  new Ajax.Updater(
+      { success: module_name + '-content', failure: module_name + '-errors'},
+      '/user/deliver_stash_invite/' + user_id,
+      {
+        asynchronous: true, method: 'get',
+        onComplete: function () {
+          hide_loading(module_name);
+        }
+      }
+  );
+  disable_module_content(module_name);
+  return false;
+}
+
+function delete_confirm(header, content, form) {
+  var pop_win = new PopupWin(400, 0);
+  pop_win.set_header(header);
+  pop_win.set_content(content)
+  pop_win.set_actions(
+      {
+        'text': 'Cancel'
+      },
+      {
+        'text': 'Ok',
+        'on_ok': function() {
+          form.onsubmit();
+          pop_win.close();
+        }
+      }
+  )
+  pop_win.show();
+}
+
+function draw_percentage_bar($, barElementName, valueElementName, used, total){
+  var barElement = $('#' + barElementName);
+  var valueElement = $('#' + valueElementName);
+  var newWidth = barElement.width() * (used / total);
+  if(newWidth > barElement.width()){
+    newWidth = barElement.width();
+  }
+  valueElement.animate({
+    width: newWidth + "px"
+  }, 500);
+}
+
+function draw_pie_chart($, elementName, available, used){
+  if(!available || available < 0){
+    available = 0;
+  }
+  if(!used){
+    used = 0;
+  }
+  if(!($("#" + elementName).length)){
+    return false;
+  }
+  var pieChartOptions = {
+    series: {
+      pie: {
+        show: true
+      }
+    },
+    grid: {
+      hoverable: true
+    }
+  };
+  if (!available && !used) { used = 1; }; // to fix #97998
+  var data = [{data: available, color: '#79be03'}, {data: used, color: '#f36422'}];
+  data.forEach(function(obj) { if (obj.data === 0) obj.data = 0.001; });
+  $.plot('#' + elementName, data, pieChartOptions);
+}
+
+function setup_toggle_links_of_summary($, name) {
+    var showMoreLink = $('#display_' + name + '_details_of_other_license_types'),
+        hideOthersLink = $('#hide_' + name + '_details_of_other_license_types');
+
+    if (!!showMoreLink.size()) {
+        showMoreLink.click(function () {
+            $('#' + name + '_details_by_license_types').find('> div').filter(function () {
+                return $(this).css('display') == 'none';
+            }).each(function () {
+                    $(this).fadeIn();
+                });
+            $(this).toggle();
+            hideOthersLink.toggle();
+        });
+
+        hideOthersLink.click(function() {
+            var rangeMatch = $(this).attr('display-range').match(/(\d+)-(\d+)/);
+            var start = rangeMatch[1], end = rangeMatch[2];
+            $('#' + name + '_details_by_license_types').find('> div').slice(start, end).each(function() {
+                $(this).toggle();
+            });
+            $(this).toggle();
+            showMoreLink.toggle();
+        });
+    }
+}
+
+function setup_toggle_links_of_storage_summary($) {
+    return setup_toggle_links_of_summary($, 'storage');
+}
+
+function setup_toggle_links_of_device_summary($) {
+    return setup_toggle_links_of_summary($, 'device');
+}
+
+function send_user_keys(user_id) {
+  var module_name = '#user-show-' + user_id + '-errors';
+  var effect_module_name = 'user-show-' + user_id;
+  show_loading(effect_module_name);
+  jQuery('#send_key_' + user_id).prop('disabled', true);
+  jQuery('#send_key_' + user_id).addClass('disabled_button');
+  jQuery.getJSON('user/send_key/' + user_id, function(return_json) {
+    var new_ul = jQuery('<ul>');
+    var new_li = jQuery('<li>');
+    if(return_json.status == true) {
+      new_ul.addClass("flash successes");
+    }
+    else {
+      new_ul.addClass("flash errors");
+    }
+  new_li.text( return_json.message);
+  new_ul.append(new_li);
+  jQuery(module_name).empty();
+  jQuery(module_name).append(new_ul);
+  hide_loading(effect_module_name);
+  jQuery('#send_key_' + user_id).prop('disabled', false);
+  jQuery('#send_key_' + user_id).removeClass('disabled_button');
+  });
+}
+
+function validate_storage_limit(number){
+  return /^\+?(0|[1-9]\d*)$/.test(number)
+}
+
+function delete_usergroup(target){
+  var delete_icon = target.closest('a');
+  if (confirm(delete_icon.data('ug-confirm'))) {
+    show_loading('user_groups-list');
+    jQuery('#user_groups-list-errors').empty();
+    jQuery.ajax({
+      url: 'user_groups/delete/' + delete_icon.attr('ug_id'),
+      dataType: 'json',
+      success: function (data) {
+        hide_loading('user_groups-list');
+        var ul = jQuery('<ul>');
+        ul.addClass('flash successes');
+        var li = jQuery('<li>');
+        li.text(data.message);
+        ul.append(li);
+        jQuery('#user_groups-list-errors').append(ul);
+        var parent_table = target.parents('.user_group_list').dataTable();
+        target_position = parent_table.fnGetPosition(delete_icon.parents('tr:first')[0]);
+        parent_table.fnDeleteRow(target_position);
+        if (document.getElementById('user_groups-edit_storage_pool_policy-' + delete_icon.attr('ug_id')) != null)
+        {
+          delete_module('user_groups-edit_storage_pool_policy-' + delete_icon.attr('ug_id'));
+        }
+      },
+      error: function (data) {
+        var return_json = jQuery.parseJSON(data.responseText);
+        hide_loading('user_groups-list');
+        var ul = jQuery('<ul>');
+        ul.addClass('flash errors');
+        var li = jQuery('<li>');
+        li.text(return_json.message);
+        ul.append(li);
+        jQuery('#user_groups-list-errors').append(ul);
+      }
+    });
+  }
+}
+
